@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">
+    <defs>
+      <linearGradient id="cGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#18181B" />
+        <stop offset="100%" stop-color="#09090B" />
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="600" fill="url(#cGrad)" />
+    <!-- Subtle geometric luxury overlay -->
+    <circle cx="600" cy="300" r="220" fill="none" stroke="#B89B62" stroke-width="1.5" opacity="0.25" />
+    <circle cx="600" cy="300" r="180" fill="none" stroke="#B89B62" stroke-width="1" opacity="0.15" />
+    <line x1="200" y1="300" x2="1000" y2="300" stroke="#B89B62" stroke-width="1" opacity="0.2" />
+    <text x="600" y="270" text-anchor="middle" fill="#FFFFFF" font-family="'Cinzel', 'Playfair Display', serif" font-size="44" letter-spacing="6" font-weight="600">MEN'S COLLECTION</text>
+    <text x="600" y="325" text-anchor="middle" fill="#B89B62" font-family="'Plus Jakarta Sans', sans-serif" font-size="16" letter-spacing="4">BOLD CHRONOGRAPHS & ARCHITECTURAL STEEL</text>
+    <text x="600" y="380" text-anchor="middle" fill="#AEB2B7" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" letter-spacing="2">TIMELESS TRENDS CURATION</text>
+  </svg>
