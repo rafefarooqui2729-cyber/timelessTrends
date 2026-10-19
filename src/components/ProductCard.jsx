@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, MessageCircle } from 'lucide-react';
 import { formatCurrency, hasValidPrice } from '../utils/formatCurrency';
@@ -10,6 +10,12 @@ export function ProductCard({ product }) {
   const [selectedVariant, setSelectedVariant] = useState(
     product.variants && product.variants.length > 0 ? product.variants[0] : null
   );
+
+  useEffect(() => {
+    setActiveImage(product.mainImage);
+    setImageError(false);
+    setSelectedVariant(product.variants && product.variants.length > 0 ? product.variants[0] : null);
+  }, [product]);
 
   const hasVariants = product.variants && product.variants.length > 0;
   const isDiscounted = product.originalPrice && product.price && product.originalPrice > product.price;
@@ -43,7 +49,7 @@ export function ProductCard({ product }) {
         </div>
 
         <Link to={`/product/${product.slug}`} tabIndex={-1} aria-hidden="true" style={{ width: '100%', height: '100%', display: 'block' }}>
-          {imageError ? (
+          {!activeImage || imageError ? (
             <div style={{
               width: '100%',
               height: '100%',

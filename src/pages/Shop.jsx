@@ -1,45 +1,91 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getAllProducts, filterAndSortProducts } from '../utils/products';
+import { fetchPublicProducts } from '../utils/publicProductsApi';
+import { filterAndSortProducts } from '../utils/products';
 import { ProductFilters } from '../components/ProductFilters';
 import { ProductGrid } from '../components/ProductGrid';
 
 export function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const allProducts = getAllProducts();
 
-  // Initialize state from URL params
-  const initialCategory = searchParams.get('category') || 'all';
-  const initialQuery = searchParams.get('q') || '';
-  const initialSort = searchParams.get('sort') || 'featured';
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const [category, setCategory] = useState(initialCategory);
-  const [search, setSearch] = useState(initialQuery);
-  const [sort, setSort] = useState(initialSort);
+  // Initialize filter state from URL parameters.
+  const [category, setCategory] = useState(
+    () => searchParams.get('category') || 'all'
+  );
+  const [search, setSearch] = useState(
+    () => searchParams.get('q') || ''
+  );
+  const [sort, setSort] = useState(
+    () => searchParams.get('sort') || 'featured'
+  );
 
-  // Sync state when URL params change externally (e.g. navbar clicks)
+  // Fetch the real, published catalogue from the backend.
   useEffect(() => {
-    const urlCategory = searchParams.get('category') || 'all';
-    const urlQuery = searchParams.get('q') || '';
-    const urlSort = searchParams.get('sort') || 'featured';
+    let cancelled = false;
 
-    setCategory(urlCategory);
-    setSearch(urlQuery);
-    setSort(urlSort);
+    async function loadProducts() {
+      setLoading(true);
+      setError('');
+
+      try {
+        const data = await fetchPublicProducts();
+
+        if (!cancelled) {
+          setProducts(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'Unable to load watches.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
+  // Sync filter state when URL parameters change externally.
+  useEffect(() => {
+    setCategory(searchParams.get('category') || 'all');
+    setSearch(searchParams.get('q') || '');
+    setSort(searchParams.get('sort') || 'featured');
   }, [searchParams]);
 
-  // Update URL params when local filter state changes
-  const updateUrlParams = (newCat, newSearch, newSort) => {
+  // Update URL parameters when a filter changes.
+  const updateUrlParams = (newCategory, newSearch, newSort) => {
     const params = new URLSearchParams();
-    if (newCat && newCat !== 'all') params.set('category', newCat);
-    if (newSearch && newSearch.trim()) params.set('q', newSearch.trim());
-    if (newSort && newSort !== 'featured') params.set('sort', newSort);
+
+    if (newCategory && newCategory !== 'all') {
+      params.set('category', newCategory);
+    }
+
+    if (newSearch && newSearch.trim()) {
+      params.set('q', newSearch.trim());
+    }
+
+    if (newSort && newSort !== 'featured') {
+      params.set('sort', newSort);
+    }
+
     setSearchParams(params, { replace: true });
   };
 
-  const handleCategoryChange = (newCat) => {
-    setCategory(newCat);
-    updateUrlParams(newCat, search, sort);
+  const handleCategoryChange = (newCategory) => {
+    setCategory(newCategory);
+    updateUrlParams(newCategory, search, sort);
   };
 
   const handleSearchChange = (newSearch) => {
@@ -59,27 +105,36 @@ export function Shop() {
     setSearchParams({}, { replace: true });
   };
 
-  const filteredProducts = filterAndSortProducts(allProducts, {
+  const filteredProducts = filterAndSortProducts(products, {
     category,
     search,
-    sort
+    sort,
   });
 
   return (
     <div className="shop-page section">
       <div className="container">
-        {/* Editorial Header */}
-        <div className="section-header" style={{ marginBottom: '36px' }}>
-          <span className="section-subtitle">TIMELESS TRENDS CATALOGUE</span>
+        <div
+          className="section-header"
+          style={{ marginBottom: '36px' }}
+        >
+          <span className="section-subtitle">
+            TIMELESS TRENDS CATALOGUE
+          </span>
+
           <h1 className="section-title">All Watches</h1>
+
           <div className="gold-divider" />
+
           <p className="section-description">
-            Explore our curated selection of fine timepieces. Select any model to view detailed photos, colour variants, and initiate a direct enquiry on WhatsApp.
+            Explore our curated selection of fine timepieces. Select any
+            model to view detailed photos, colour variants, and initiate
+            a direct enquiry on WhatsApp.
           </p>
         </div>
 
-        {/* Toolbar: Search, Filters & Sorters */}
         <ProductFilters
+          products={products}
           search={search}
           onSearchChange={handleSearchChange}
           category={category}
@@ -90,11 +145,56 @@ export function Shop() {
           onReset={handleReset}
         />
 
-        {/* Results Product Grid */}
-        <ProductGrid
-          products={filteredProducts}
-          onReset={handleReset}
-        />
+        {loading ? (
+          <div
+            className="section"
+            role="status"
+            style={{ textAlign: 'center' }}
+          >
+            Loading watches from our catalogue...
+          </div>
+        ) : error ? (
+          <div
+            className="section"
+            role="alert"
+            style={{ textAlign: 'center' }}
+          >
+            <p>We couldn't load the watches.</p>
+            <p>{error}</p>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Try Again
+            </button>
+          </div>
+        ) : filteredProducts.length > 0 ? (
+          <ProductGrid
+            products={filteredProducts}
+            onReset={handleReset}
+          />
+        ) : (
+          <div
+            className="section"
+            style={{ textAlign: 'center' }}
+          >
+            <h2>No watches found</h2>
+            <p>
+              Try a different search or remove some filters to explore
+              the available catalogue.
+            </p>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleReset}
+            >
+              Show All Watches
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

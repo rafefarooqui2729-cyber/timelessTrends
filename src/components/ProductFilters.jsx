@@ -1,9 +1,11 @@
 import React from 'react';
 import { SearchBar } from './SearchBar';
-import { getCategoriesWithCounts } from '../utils/products';
+import { siteConfig } from '../config/siteConfig';
+import { matchesCategory } from '../utils/products';
 import { SlidersHorizontal, RotateCcw } from 'lucide-react';
 
 export function ProductFilters({
+  products = [],
   search,
   onSearchChange,
   category,
@@ -13,7 +15,17 @@ export function ProductFilters({
   totalResults,
   onReset
 }) {
-  const categoriesWithCounts = getCategoriesWithCounts();
+  const configs = siteConfig.categories || [];
+  const categoriesWithCounts = configs.map((cat) => {
+    let count = 0;
+    if (cat.id === 'all') {
+      count = products.length;
+    } else {
+      count = products.filter((p) => matchesCategory(p, cat.id)).length;
+    }
+    return { ...cat, count };
+  });
+
   const hasActiveFilters = Boolean(search.trim()) || category !== 'all' || sort !== 'featured';
 
   return (

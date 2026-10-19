@@ -1,0 +1,2486 @@
+
+========== src\App.jsx ==========
+
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Header } from './components/Header';
+import { Footer } from './components/Footer';
+import { Home } from './pages/Home';
+import { Shop } from './pages/Shop';
+import { ProductDetails } from './pages/ProductDetails';
+import { Collections } from './pages/Collections';
+import { About } from './pages/About';
+import { Contact } from './pages/Contact';
+import { NotFound } from './pages/NotFound';
+
+// Admin imports
+import Login from './admin/pages/Login';
+import AdminLayout from './admin/AdminLayout';
+import DashboardOverview from './admin/pages/DashboardOverview';
+import ProductsList from './admin/pages/ProductsList';
+import ProductEditor from './admin/pages/ProductEditor';
+import InventoryManagement from './admin/pages/InventoryManagement';
+import CategoriesManagement from './admin/pages/CategoriesManagement';
+import NewArrivalsManagement from './admin/pages/NewArrivalsManagement';
+import OffersManagement from './admin/pages/OffersManagement';
+import MediaLibrary from './admin/pages/MediaLibrary';
+import InquiriesManagement from './admin/pages/InquiriesManagement';
+import AdminsManagement from './admin/pages/AdminsManagement';
+import ActivityLogs from './admin/pages/ActivityLogs';
+import SettingsManagement from './admin/pages/SettingsManagement';
+
+import './styles/variables.css';
+import './styles/global.css';
+import './styles/components.css';
+
+/**
+ * ScrollToTop helper: scrolls window to top on route change
+ */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
+export function App() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <div className="app-container">
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/collections" element={<Collections />} />
+            <Route path="/product/:slug" element={<ProductDetails />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/admin/login" element={<Login />} />
+            {/* Protected admin routes wrapped with AdminLayout */}
+            <Route path="/admin/*" element={<AdminLayout />}>
+              <Route path="dashboard" element={<DashboardOverview />} />
+              <Route path="products" element={<ProductsList />} />
+              <Route path="products/new" element={<ProductEditor />} />
+              <Route path="products/:id/edit" element={<ProductEditor />} />
+              <Route path="inventory" element={<InventoryManagement />} />
+              <Route path="categories" element={<CategoriesManagement />} />
+              <Route path="new-arrivals" element={<NewArrivalsManagement />} />
+              <Route path="offers" element={<OffersManagement />} />
+              <Route path="media" element={<MediaLibrary />} />
+              <Route path="inquiries" element={<InquiriesManagement />} />
+              <Route path="admins" element={<AdminsManagement />} />
+              <Route path="activity-logs" element={<ActivityLogs />} />
+              <Route path="settings" element={<SettingsManagement />} />
+               <Route path="*" element={<NotFound />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+
+========== src\components\Footer.jsx ==========
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Check, MessageCircle, Clock, ShieldCheck } from 'lucide-react';
+import { siteConfig } from '../config/siteConfig';
+import { WhatsAppButton } from './WhatsAppButton';
+
+export function Footer() {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer className="site-footer">
+      <div className="container">
+        <div className="footer-grid">
+          {/* Column 1: Brand Identity & Closing Statement */}
+          <div className="footer-brand-col">
+            <h3 className="footer-brand-title">{siteConfig.brandName}</h3>
+            <p className="footer-brand-tagline">{siteConfig.tagline}</p>
+            <blockquote className="footer-closing-quote">
+              "{siteConfig.closingStatement}"
+            </blockquote>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-silver)', marginTop: '16px', lineHeight: 1.6 }}>
+              Curating refined watches for those who appreciate distinction, enduring craftsmanship, and contemporary style.
+            </p>
+          </div>
+
+          {/* Column 2: Quick Links */}
+          <div>
+            <h4 className="footer-col-title">Catalogue</h4>
+            <ul className="footer-links-list">
+              <li><Link to="/shop" className="footer-link">All Watches</Link></li>
+              <li><Link to="/shop?category=everyday-classics" className="footer-link">Everyday Classics</Link></li>
+              <li><Link to="/shop?category=trending" className="footer-link">Trending & Modern</Link></li>
+              <li><Link to="/shop?category=mens" className="footer-link">Men's Collection</Link></li>
+              <li><Link to="/shop?category=womens" className="footer-link">Women's Collection</Link></li>
+              <li><Link to="/collections" className="footer-link">Browse All Collections</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 3: Information & Navigation */}
+          <div>
+            <h4 className="footer-col-title">Information</h4>
+            <ul className="footer-links-list">
+              <li><Link to="/about" className="footer-link">About Brand</Link></li>
+              <li><Link to="/contact" className="footer-link">Contact & WhatsApp</Link></li>
+              <li><Link to="/about#process" className="footer-link">How Enquiry Works</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 4: Brand Values & WhatsApp CTA */}
+          <div>
+            <h4 className="footer-col-title">Brand Commitment</h4>
+            <ul className="footer-values-list" style={{ marginBottom: '20px' }}>
+              {siteConfig.brandMessage.slice(0, 4).map((value, idx) => (
+                <li key={idx} className="footer-values-item">
+                  <Check size={14} />
+                  <span>{value}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div style={{ marginTop: '20px' }}>
+              <WhatsAppButton
+                label="Direct WhatsApp Chat"
+                variantStyle="primary"
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="footer-bottom-row">
+          <div>
+            &copy; {currentYear} {siteConfig.brandName}. All rights reserved.
+          </div>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <span>Product Discovery & WhatsApp Enquiry</span>
+            <span>•</span>
+            <span>No Online Checkout</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export default Footer;
+
+========== src\components\Header.jsx ==========
+
+import React, { useState, useEffect } from 'react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
+import { Menu, X, MessageCircle } from 'lucide-react';
+import { siteConfig } from '../config/siteConfig';
+import { WhatsAppButton } from './WhatsAppButton';
+
+export function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  const navLinks = [
+    { to: '/', label: 'Home' },
+    { to: '/shop', label: 'All Watches' },
+    { to: '/collections', label: 'Collections' },
+    { to: '/about', label: 'About Us' },
+    { to: '/contact', label: 'Contact' },
+  ];
+
+  return (
+    <header className="site-header">
+      <div className="container header-inner">
+        {/* Brand Wordmark & Tagline */}
+        <Link to="/" className="brand-logo-link" aria-label="TIMELESS TRENDS Homepage">
+          <span className="brand-wordmark">{siteConfig.brandName}</span>
+          <span className="brand-submark">HAUTE HORLOGERIE & STYLE</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="nav-desktop" aria-label="Primary Navigation">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              className={({ isActive }) =>
+                isActive ? 'nav-link active' : 'nav-link'
+              }
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Header Right Actions */}
+        <div className="header-actions">
+          <WhatsAppButton
+            label="WhatsApp Enquiry"
+            variantStyle="outline"
+            className="header-wa-btn"
+            ariaLabel="Contact Timeless Trends on WhatsApp"
+          />
+          <Link to="/admin/login" className="admin-login-btn" style={{ marginLeft: '12px', padding: '6px 12px', backgroundColor: '#B89B62', color: '#fff', borderRadius: '4px', textDecoration: 'none' }}>Admin Login</Link>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      <div
+        className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden={!mobileMenuOpen}
+      />
+
+      {/* Mobile Drawer Panel */}
+      <div
+        className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile Navigation"
+      >
+        <div className="mobile-nav-header">
+          <div>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>
+              {siteConfig.brandName}
+            </div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--color-gold)', letterSpacing: '0.2em' }}>
+              COLLECTIONS
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#fff', padding: '4px' }}
+            aria-label="Close menu"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <nav className="mobile-nav-links">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              className={({ isActive }) =>
+                isActive ? 'mobile-nav-link active' : 'mobile-nav-link'
+              }
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--color-border-dark)' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--color-silver)', marginBottom: '16px' }}>
+            {siteConfig.tagline}
+          </p>
+          <WhatsAppButton
+            label="Enquire on WhatsApp"
+            variantStyle="primary"
+            className="btn-whatsapp"
+            style={{ width: '100%' }}
+          />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default Header;
+
+========== src\admin\pages\Login.jsx ==========
+
+import React, { useState } from 'react';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
+import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useAdminAuth } from '../AdminAuthContext';
+import '../admin.css';
+
+export function Login() {
+  const { user, login } = useAdminAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/admin/dashboard';
+
+  if (user) {
+    return <Navigate to={from} replace />;
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message || 'Authentication failed. Please verify credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0A0A0A',
+      padding: '24px'
+    }}>
+      <div style={{
+        maxWidth: '440px',
+        width: '100%',
+        backgroundColor: '#141414',
+        border: '1px solid #282828',
+        borderRadius: '4px',
+        padding: 'clamp(32px, 6vw, 44px)',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)'
+      }}>
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{
+            display: 'inline-flex',
+            padding: '14px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(184, 155, 98, 0.1)',
+            color: '#B89B62',
+            marginBottom: '14px'
+          }}>
+            <Lock size={26} />
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', color: '#fff', letterSpacing: '0.1em' }}>
+            TIMELESS TRENDS
+          </h1>
+          <span style={{ fontSize: '0.72rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B89B62', fontWeight: 600 }}>
+            Secure Management Console
+          </span>
+        </div>
+
+        {error && (
+          <div style={{
+            backgroundColor: 'rgba(220, 38, 38, 0.15)',
+            border: '1px solid rgba(220, 38, 38, 0.4)',
+            color: '#FCA5A5',
+            padding: '12px 14px',
+            borderRadius: '4px',
+            fontSize: '0.85rem',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <AlertCircle size={18} flexShrink={0} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="admin-form-group">
+            <label className="admin-form-label" htmlFor="admin-email">
+              Administrator Email
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="admin-email"
+                type="email"
+                required
+                className="admin-input"
+                style={{ paddingLeft: '38px' }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@timelesstrends.com"
+              />
+              <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+            </div>
+          </div>
+
+          <div className="admin-form-group" style={{ marginBottom: '28px' }}>
+            <label className="admin-form-label" htmlFor="admin-password">
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="admin-password"
+                type="password"
+                required
+                className="admin-input"
+                style={{ paddingLeft: '38px' }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+              />
+              <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-admin-gold"
+            style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.9rem' }}
+          >
+            {loading ? 'Authenticating...' : 'Sign In to Console'}
+            {!loading && <ArrowRight size={16} />}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid #222', textAlign: 'center' }}>
+          <Link to="/" style={{ fontSize: '0.8rem', color: '#888', textDecoration: 'none' }}>
+            &larr; Return to Public Website
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Login;
+
+========== src\admin\pages\ProductEditor.jsx ==========
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  Watch, Save, ArrowLeft, Plus, Trash2, Upload,
+  Image as ImageIcon, Check, AlertCircle, Copy, CheckCircle
+} from 'lucide-react';
+import { api } from '../api';
+import { useAdminAuth } from '../AdminAuthContext';
+
+export function ProductEditor() {
+  const { id } = useParams();
+  const isNew = !id || id === 'new';
+  const navigate = useNavigate();
+  const { isInventoryManager, isSuperAdmin } = useAdminAuth();
+
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  // Form State
+  const [name, setName] = useState('');
+  const [brand, setBrand] = useState('TIMELESS TRENDS');
+  const [model, setModel] = useState('');
+  const [category, setCategory] = useState('');
+  const [sellingPrice, setSellingPrice] = useState('');
+  const [originalPrice, setOriginalPrice] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('draft');
+  const [isNewArrival, setIsNewArrival] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [displayPriority, setDisplayPriority] = useState(0);
+
+  // Specifications array: [{ label: string, value: string }]
+  const [specs, setSpecs] = useState([
+    { label: 'Case Diameter', value: '' },
+    { label: 'Case Material', value: '' },
+    { label: 'Movement', value: '' },
+    { label: 'Water Resistance', value: '' }
+  ]);
+
+  // Variants array
+  const [variants, setVariants] = useState([
+    { colour: 'Default', price_override: '', min_stock: 2, stock_on_hand: 5, avg_cost: '' }
+  ]);
+
+  // Image Upload state
+  const [images, setImages] = useState([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  useEffect(() => {
+    loadCategories();
+    if (!isNew) {
+      loadProduct();
+    }
+  }, [id]);
+
+  async function loadCategories() {
+    try {
+      const data = await api('/api/admin/categories');
+      setCategories(data);
+      if (isNew && data.length > 0) setCategory(data[0].slug);
+    } catch {}
+  }
+
+  async function loadProduct() {
+    try {
+      setLoading(true);
+      const p = await api(`/api/admin/products/${id}`);
+      setName(p.name);
+      setBrand(p.brand || '');
+      setModel(p.model || '');
+      setCategory(p.category || '');
+      setSellingPrice(p.selling_price != null ? String(p.selling_price) : '');
+      setOriginalPrice(p.original_price != null ? String(p.original_price) : '');
+      setDescription(p.description || '');
+      setStatus(p.status || 'draft');
+      setIsNewArrival(Boolean(p.is_new_arrival));
+      setIsFeatured(Boolean(p.is_featured));
+      setDisplayPriority(p.display_priority || 0);
+      setSpecs(p.specs && p.specs.length > 0 ? p.specs : [{ label: 'Case Diameter', value: '' }]);
+      setVariants(p.variants || []);
+      setImages(p.images || []);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Specifications helpers
+  const handleAddSpec = () => {
+    setSpecs([...specs, { label: '', value: '' }]);
+  };
+
+  const handleUpdateSpec = (index, field, val) => {
+    const updated = [...specs];
+    updated[index][field] = val;
+    setSpecs(updated);
+  };
+
+  const handleRemoveSpec = (index) => {
+    setSpecs(specs.filter((_, i) => i !== index));
+  };
+
+  // Variants helpers
+  const handleAddVariant = () => {
+    setVariants([...variants, { colour: '', price_override: '', min_stock: 2, stock_on_hand: 0, avg_cost: '' }]);
+  };
+
+  const handleUpdateVariant = (index, field, val) => {
+    const updated = [...variants];
+    updated[index][field] = val;
+    setVariants(updated);
+  };
+
+  const handleRemoveVariant = async (index, variantId) => {
+    if (!isNew && variantId) {
+      if (!window.confirm('Delete this variant colour?')) return;
+      try {
+        await api(`/api/admin/variants/${variantId}`, { method: 'DELETE' });
+        setVariants(variants.filter(v => v.id !== variantId));
+        return;
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+    }
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
+  // Image Upload handler
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (isNew) {
+      alert('Please save the product basic details first before uploading gallery photographs.');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('alt', `${name} watch photograph`);
+
+      const updated = await api(`/api/admin/products/${id}/images`, {
+        method: 'POST',
+        body: formData,
+        isFormData: true
+      });
+      setImages(updated.images || []);
+      setSuccess('Image uploaded and optimized to WebP successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId) => {
+    if (!window.confirm('Delete this gallery photograph?')) return;
+    try {
+      const updated = await api(`/api/admin/images/${imageId}`, { method: 'DELETE' });
+      setImages(updated.images || []);
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      alert('Product name is required.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    const validSpecs = specs.filter(s => s.label.trim() && s.value.trim());
+
+    const payload = {
+      name: name.trim(),
+      brand: brand.trim() || null,
+      model: model.trim() || null,
+      category: category || null,
+      selling_price: sellingPrice ? Number(sellingPrice) : null,
+      original_price: originalPrice ? Number(originalPrice) : null,
+      description: description.trim() || null,
+      specs: validSpecs,
+      status,
+      is_new_arrival: isNewArrival,
+      is_featured: isFeatured,
+      display_priority: Number(displayPriority) || 0
+    };
+
+    try {
+      if (isNew) {
+        // Must provide at least one variant when creating
+        const validVariants = variants.map(v => ({
+          colour: v.colour.trim() || 'Default Finish',
+          price_override: v.price_override ? Number(v.price_override) : null,
+          min_stock: Number(v.min_stock) || 2,
+          stock_on_hand: Number(v.stock_on_hand) || 0,
+          avg_cost: v.avg_cost ? Number(v.avg_cost) : null
+        }));
+
+        const created = await api('/api/admin/products', {
+          method: 'POST',
+          body: { ...payload, variants: validVariants }
+        });
+        navigate(`/admin/products/${created.id}/edit`);
+      } else {
+        await api(`/api/admin/products/${id}`, {
+          method: 'PUT',
+          body: payload
+        });
+        setSuccess('Watch details updated successfully!');
+        setTimeout(() => setSuccess(null), 3000);
+        loadProduct();
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div style={{ color: '#888', padding: '36px 0' }}>Loading timepiece editor...</div>;
+  }
+
+  return (
+    <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link to="/admin/products" className="btn-admin-ghost" style={{ padding: '8px' }}>
+            <ArrowLeft size={16} />
+          </Link>
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', color: '#fff' }}>
+              {isNew ? 'Add New Timepiece' : `Edit: ${name}`}
+            </h2>
+            <span style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+              {isNew ? 'Create a new catalog watch' : `ID: TT-P${String(id).padStart(4, '0')}`}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving}
+          className="btn-admin-gold"
+          style={{ padding: '10px 24px' }}
+        >
+          <Save size={16} />
+          <span>{saving ? 'Saving Changes...' : 'Save Watch'}</span>
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ backgroundColor: 'rgba(220, 38, 38, 0.15)', border: '1px solid #7F1D1D', color: '#FCA5A5', padding: '14px', borderRadius: '4px', marginBottom: '20px' }}>
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{ backgroundColor: 'rgba(22, 138, 74, 0.15)', border: '1px solid #168A4A', color: '#86EFAC', padding: '14px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckCircle size={16} />
+          <span>{success}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {/* Section 1: Basic Information */}
+        <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <h3 className="admin-card-title" style={{ marginBottom: '20px', borderBottom: '1px solid #282828', paddingBottom: '12px' }}>
+            Basic Information
+          </h3>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+            <div className="admin-form-group">
+              <label className="admin-form-label">Watch Model Name *</label>
+              <input
+                type="text"
+                required
+                className="admin-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Master Chronograph Sunburst"
+              />
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Brand</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="TIMELESS TRENDS"
+              />
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Model Reference</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="e.g. TT-MC42"
+              />
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Category</label>
+              <select
+                className="admin-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">None / Unassigned</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.slug}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Catalog Status</label>
+              <select
+                className="admin-select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="draft">Draft (Hidden from public store)</option>
+                <option value="published">Published (Visible in store)</option>
+                <option value="archived">Archived (Removed from catalog)</option>
+              </select>
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Display Priority (Ordering)</label>
+              <input
+                type="number"
+                className="admin-input"
+                value={displayPriority}
+                onChange={(e) => setDisplayPriority(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '24px', marginTop: '16px', flexWrap: 'wrap' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+              <input
+                type="checkbox"
+                checked={isNewArrival}
+                onChange={(e) => setIsNewArrival(e.target.checked)}
+              />
+              <span>Mark as New Arrival</span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+              <input
+                type="checkbox"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+              />
+              <span>Feature on Homepage</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Section 2: Pricing */}
+        <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <h3 className="admin-card-title" style={{ marginBottom: '20px', borderBottom: '1px solid #282828', paddingBottom: '12px' }}>
+            Pricing &amp; Valuation (INR ₹)
+          </h3>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            <div className="admin-form-group">
+              <label className="admin-form-label">Selling Price (₹)</label>
+              <input
+                type="number"
+                min="0"
+                className="admin-input"
+                value={sellingPrice}
+                onChange={(e) => setSellingPrice(e.target.value)}
+                placeholder="Leave blank for 'Price on request'"
+              />
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Original Retail Price (₹)</label>
+              <input
+                type="number"
+                min="0"
+                className="admin-input"
+                value={originalPrice}
+                onChange={(e) => setOriginalPrice(e.target.value)}
+                placeholder="Used for strike-through discount"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Editorial Description */}
+        <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <h3 className="admin-card-title" style={{ marginBottom: '20px', borderBottom: '1px solid #282828', paddingBottom: '12px' }}>
+            Editorial Presentation Narrative
+          </h3>
+
+          <div className="admin-form-group">
+            <textarea
+              rows={4}
+              className="admin-textarea"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Editorial description detailing watch movement, craftsmanship, dial textures, and styling versatility..."
+            />
+          </div>
+        </div>
+
+        {/* Section 4: Specifications */}
+        <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 className="admin-card-title">Confirmed Specifications</h3>
+            <button type="button" onClick={handleAddSpec} className="btn-admin-ghost" style={{ fontSize: '0.75rem' }}>
+              <Plus size={13} />
+              <span>Add Specification</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {specs.map((s, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: '10px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  className="admin-input"
+                  placeholder="Label (e.g. Case Diameter)"
+                  value={s.label}
+                  onChange={(e) => handleUpdateSpec(idx, 'label', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="admin-input"
+                  placeholder="Specification Value (e.g. 42 mm)"
+                  value={s.value}
+                  onChange={(e) => handleUpdateSpec(idx, 'value', e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveSpec(idx)}
+                  className="btn-admin-ghost"
+                  style={{ color: '#F87171', padding: '8px' }}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 5: Colour Variants & Stock */}
+        <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 className="admin-card-title">Colour &amp; Finish Variants</h3>
+              <p style={{ fontSize: '0.78rem', color: '#888' }}>
+                Each colour tracks physical stock on hand and minimum reorder threshold.
+              </p>
+            </div>
+            <button type="button" onClick={handleAddVariant} className="btn-admin-ghost" style={{ fontSize: '0.75rem' }}>
+              <Plus size={13} />
+              <span>Add Colour Variant</span>
+            </button>
+          </div>
+
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Colour Name *</th>
+                  <th>Price Override (₹)</th>
+                  <th>Min Stock Alert</th>
+                  {isNew && <th>Initial Units</th>}
+                  {!isNew && <th>Stock on Hand</th>}
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {variants.map((v, idx) => (
+                  <tr key={idx}>
+                    <td>
+                      <input
+                        type="text"
+                        required
+                        className="admin-input"
+                        placeholder="e.g. Obsidian Black Steel"
+                        value={v.colour}
+                        onChange={(e) => handleUpdateVariant(idx, 'colour', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        className="admin-input"
+                        placeholder="Inherits price"
+                        value={v.price_override || ''}
+                        onChange={(e) => handleUpdateVariant(idx, 'price_override', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        className="admin-input"
+                        style={{ width: '80px' }}
+                        value={v.min_stock || 2}
+                        onChange={(e) => handleUpdateVariant(idx, 'min_stock', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      {isNew ? (
+                        <input
+                          type="number"
+                          className="admin-input"
+                          style={{ width: '90px' }}
+                          value={v.stock_on_hand || 0}
+                          onChange={(e) => handleUpdateVariant(idx, 'stock_on_hand', e.target.value)}
+                        />
+                      ) : (
+                        <span style={{ fontWeight: 700, color: '#4ADE80' }}>
+                          {v.stock_on_hand} units
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {variants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVariant(idx, v.id)}
+                          className="btn-admin-ghost"
+                          style={{ color: '#F87171', padding: '6px' }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Section 6: Image Gallery */}
+        {!isNew && (
+          <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 className="admin-card-title">Product Photographs Gallery</h3>
+                <p style={{ fontSize: '0.78rem', color: '#888' }}>
+                  Upload multiple photos. Originals are stored privately; high-res WebP derivatives are served on store.
+                </p>
+              </div>
+
+              <label className="btn-admin-gold" style={{ cursor: 'pointer' }}>
+                <Upload size={14} />
+                <span>{uploadingImage ? 'Uploading & Converting...' : 'Upload Photo'}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                  disabled={uploadingImage}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
+              {images.map((img) => (
+                <div
+                  key={img.id}
+                  style={{
+                    backgroundColor: '#111',
+                    border: '1px solid #333',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    aspectRatio: '4 / 5'
+                  }}
+                >
+                  <img
+                    src={img.url}
+                    alt={img.alt || 'Watch photo'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteImage(img.id)}
+                    style={{
+                      position: 'absolute',
+                      top: '6px',
+                      right: '6px',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      border: 'none',
+                      color: '#F87171',
+                      borderRadius: '50%',
+                      padding: '4px',
+                      cursor: 'pointer'
+                    }}
+                    title="Delete image"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+
+              {images.length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px', border: '1px dashed #333', borderRadius: '4px', color: '#777' }}>
+                  <ImageIcon size={32} style={{ marginBottom: '8px', color: '#555' }} />
+                  <div>No photographs uploaded yet for this watch.</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Submit Bar */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginBottom: '40px' }}>
+          <Link to="/admin/products" className="btn-admin-ghost">
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn-admin-gold"
+            style={{ padding: '12px 32px' }}
+          >
+            <Save size={16} />
+            <span>{saving ? 'Saving...' : 'Save Watch'}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default ProductEditor;
+
+========== src\admin\pages\InventoryManagement.jsx ==========
+
+import React, { useState, useEffect } from 'react';
+import {
+  Boxes, Search, Filter, AlertTriangle, CheckCircle, ArrowDownUp,
+  Download, Plus, RefreshCw, X, ShieldAlert, History, TrendingUp, DollarSign
+} from 'lucide-react';
+import { api } from '../api';
+import { useAdminAuth } from '../AdminAuthContext';
+
+export function InventoryManagement() {
+  const { user, isSuperAdmin, isInventoryManager } = useAdminAuth();
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'movements'
+  const [inventory, setInventory] = useState([]);
+  const [valuation, setValuation] = useState(null);
+  const [movements, setMovements] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+
+  // Modal states
+  const [adjustModal, setAdjustModal] = useState({ open: false, item: null, newQty: '', reason: '' });
+  const [receiveModal, setReceiveModal] = useState({
+    open: false,
+    item: null,
+    supplierId: '',
+    quantity: '',
+    unitCost: '',
+    reference: '',
+    notes: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const canEdit = isSuperAdmin || isInventoryManager;
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const invRes = await api('/api/admin/inventory');
+      setInventory(invRes.rows || []);
+      setValuation(invRes.valuation || null);
+
+      const suppRes = await api('/api/admin/suppliers').catch(() => []);
+      setSuppliers(suppRes || []);
+
+      if (activeTab === 'movements') {
+        const movRes = await api('/api/admin/stock/movements');
+        setMovements(movRes || []);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load inventory data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [activeTab]);
+
+  const handleAdjustSubmit = async (e) => {
+    e.preventDefault();
+    if (!adjustModal.item) return;
+    const newQty = parseInt(adjustModal.newQty, 10);
+    if (isNaN(newQty) || newQty < 0) {
+      alert('Please specify a valid non-negative quantity');
+      return;
+    }
+    if (!adjustModal.reason.trim()) {
+      alert('A reason is mandatory for manual physical adjustments');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api('/api/admin/stock/adjust', {
+        method: 'POST',
+        body: {
+          variantId: adjustModal.item.variant_id,
+          newQuantity: newQty,
+          reason: adjustModal.reason.trim()
+        }
+      });
+      setSuccessMsg(`Stock for ${adjustModal.item.product} (${adjustModal.item.colour}) updated to ${newQty}.`);
+      setAdjustModal({ open: false, item: null, newQty: '', reason: '' });
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to adjust stock');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReceiveSubmit = async (e) => {
+    e.preventDefault();
+    if (!receiveModal.item) return;
+    const qty = parseInt(receiveModal.quantity, 10);
+    if (isNaN(qty) || qty <= 0) {
+      alert('Please enter a positive quantity to receive');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        supplierId: receiveModal.supplierId ? parseInt(receiveModal.supplierId, 10) : null,
+        reference: receiveModal.reference || null,
+        notes: receiveModal.notes || null,
+        items: [{
+          variantId: receiveModal.item.variant_id,
+          quantity: qty,
+          unitCost: receiveModal.unitCost ? parseFloat(receiveModal.unitCost) : null
+        }]
+      };
+
+      await api('/api/admin/stock/receive', {
+        method: 'POST',
+        body: payload
+      });
+      setSuccessMsg(`Received ${qty} units of ${receiveModal.item.product} (${receiveModal.item.colour}).`);
+      setReceiveModal({
+        open: false,
+        item: null,
+        supplierId: '',
+        quantity: '',
+        unitCost: '',
+        reference: '',
+        notes: ''
+      });
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to receive stock');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const filteredInventory = inventory.filter((item) => {
+    const matchesSearch =
+      item.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.brand && item.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.sku && item.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.colour && item.colour.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    if (statusFilter === 'low_stock') return item.status === 'low_stock';
+    if (statusFilter === 'out_of_stock') return item.status === 'out_of_stock';
+    if (statusFilter === 'in_stock') return item.status === 'in_stock';
+    return true;
+  });
+
+  const totalOnHand = inventory.reduce((acc, curr) => acc + (curr.stock_on_hand || 0), 0);
+  const lowStockCount = inventory.filter((i) => i.status === 'low_stock').length;
+  const outOfStockCount = inventory.filter((i) => i.status === 'out_of_stock').length;
+
+  return (
+    <div className="admin-page">
+      <div className="admin-page-header">
+        <div>
+          <h1 className="admin-page-title">Inventory & Stock Tracking</h1>
+          <p className="admin-page-subtitle">Real-time ledger of watch stock, safety thresholds, and physical counts</p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <a
+            href="/api/admin/export/inventory"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline"
+            style={{ fontSize: '0.85rem' }}
+          >
+            <Download size={15} /> Export CSV
+          </a>
+          <button
+            onClick={loadData}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.85rem' }}
+            disabled={loading}
+          >
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="admin-alert admin-alert-danger" style={{ marginBottom: '20px' }}>
+          <AlertTriangle size={18} /> {error}
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="admin-alert admin-alert-success" style={{ marginBottom: '20px' }}>
+          <CheckCircle size={18} /> {successMsg}
+          <button onClick={() => setSuccessMsg(null)} style={{ background: 'none', border: 'none', color: 'inherit', marginLeft: 'auto', cursor: 'pointer' }}>×</button>
+        </div>
+      )}
+
+      {/* KPI Cards */}
+      <div className="admin-stats-grid" style={{ marginBottom: '24px' }}>
+        <div className="admin-stat-card">
+          <span className="stat-label">Total Units on Hand</span>
+          <span className="stat-value">{totalOnHand}</span>
+          <span className="stat-detail">Across {inventory.length} watch variants</span>
+        </div>
+        <div className="admin-stat-card">
+          <span className="stat-label">Low Stock Variants</span>
+          <span className="stat-value" style={{ color: lowStockCount > 0 ? 'var(--admin-warning)' : 'inherit' }}>
+            {lowStockCount}
+          </span>
+          <span className="stat-detail">Below safety threshold</span>
+        </div>
+        <div className="admin-stat-card">
+          <span className="stat-label">Out of Stock</span>
+          <span className="stat-value" style={{ color: outOfStockCount > 0 ? 'var(--admin-danger)' : 'inherit' }}>
+            {outOfStockCount}
+          </span>
+          <span className="stat-detail">Unavailable for dispatch</span>
+        </div>
+        {valuation && isSuperAdmin && (
+          <div className="admin-stat-card">
+            <span className="stat-label">Total Inventory Valuation</span>
+            <span className="stat-value" style={{ color: 'var(--admin-gold)' }}>
+              ₹{Number(valuation.total_value_at_cost || 0).toLocaleString('en-IN')}
+            </span>
+            <span className="stat-detail">At average acquisition cost</span>
+          </div>
+        )}
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="admin-tabs" style={{ marginBottom: '20px' }}>
+        <button
+          className={`admin-tab ${activeTab === 'inventory' ? 'active' : ''}`}
+          onClick={() => setActiveTab('inventory')}
+        >
+          <Boxes size={16} /> Current Stock Ledger ({inventory.length})
+        </button>
+        <button
+          className={`admin-tab ${activeTab === 'movements' ? 'active' : ''}`}
+          onClick={() => setActiveTab('movements')}
+        >
+          <History size={16} /> Stock Movement Audit ({movements.length})
+        </button>
+      </div>
+
+      {activeTab === 'inventory' && (
+        <div className="admin-card">
+          {/* Filters Bar */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Search watch title, brand, SKU or colour..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="admin-input"
+                style={{ paddingLeft: '36px' }}
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="admin-select"
+              style={{ width: 'auto', minWidth: '160px' }}
+            >
+              <option value="all">All Stock Statuses</option>
+              <option value="in_stock">In Stock (Healthy)</option>
+              <option value="low_stock">Low Stock (Needs Reorder)</option>
+              <option value="out_of_stock">Out of Stock</option>
+            </select>
+          </div>
+
+          {/* Table */}
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Product & Variant</th>
+                  <th>SKU</th>
+                  <th>Stock On Hand</th>
+                  <th>Reserved</th>
+                  <th>Available</th>
+                  <th>Min Threshold</th>
+                  {isSuperAdmin && <th>Avg Cost</th>}
+                  {isSuperAdmin && <th>Total Value</th>}
+                  <th>Status</th>
+                  {canEdit && <th style={{ textAlign: 'right' }}>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredInventory.length === 0 ? (
+                  <tr>
+                    <td colSpan={canEdit ? 10 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--admin-text-muted)' }}>
+                      No inventory records found matching your filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredInventory.map((item) => (
+                    <tr key={item.variant_id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#fff' }}>{item.product}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)' }}>
+                          {item.brand} • <span style={{ color: 'var(--admin-gold)' }}>{item.colour}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>{item.sku}</td>
+                      <td style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.stock_on_hand}</td>
+                      <td style={{ color: item.reserved > 0 ? 'var(--admin-warning)' : 'var(--admin-text-muted)' }}>
+                        {item.reserved}
+                      </td>
+                      <td style={{ fontWeight: 600, color: item.available <= 0 ? 'var(--admin-danger)' : 'inherit' }}>
+                        {item.available}
+                      </td>
+                      <td style={{ color: 'var(--admin-text-muted)', fontSize: '0.85rem' }}>
+                        {item.min_stock || 2}
+                      </td>
+                      {isSuperAdmin && (
+                        <td style={{ color: 'var(--admin-silver)', fontSize: '0.85rem' }}>
+                          {item.avg_cost != null ? `₹${Number(item.avg_cost).toLocaleString('en-IN')}` : '—'}
+                        </td>
+                      )}
+                      {isSuperAdmin && (
+                        <td style={{ color: 'var(--admin-gold)', fontSize: '0.85rem', fontWeight: 600 }}>
+                          {item.value_at_cost != null ? `₹${Number(item.value_at_cost).toLocaleString('en-IN')}` : '—'}
+                        </td>
+                      )}
+                      <td>
+                        {item.status === 'in_stock' && (
+                          <span className="admin-badge badge-active">In Stock</span>
+                        )}
+                        {item.status === 'low_stock' && (
+                          <span className="admin-badge badge-role-inv">Low Stock</span>
+                        )}
+                        {item.status === 'out_of_stock' && (
+                          <span className="admin-badge badge-danger">Out of Stock</span>
+                        )}
+                      </td>
+                      {canEdit && (
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px' }}>
+                            <button
+                              onClick={() => setAdjustModal({
+                                open: true,
+                                item,
+                                newQty: item.stock_on_hand.toString(),
+                                reason: ''
+                              })}
+                              className="btn btn-sm btn-outline"
+                              title="Set physical count adjustment"
+                            >
+                              <ArrowDownUp size={13} /> Adjust
+                            </button>
+                            <button
+                              onClick={() => setReceiveModal({
+                                open: true,
+                                item,
+                                supplierId: '',
+                                quantity: '',
+                                unitCost: item.avg_cost ? item.avg_cost.toString() : '',
+                                reference: '',
+                                notes: ''
+                              })}
+                              className="btn btn-sm btn-secondary"
+                              title="Receive stock shipment"
+                            >
+                              <Plus size={13} /> Receive
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'movements' && (
+        <div className="admin-card">
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Product & Variant</th>
+                  <th>SKU</th>
+                  <th>Type</th>
+                  <th>Change</th>
+                  <th>Balance After</th>
+                  <th>Reason / Notes</th>
+                  <th>Operator</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--admin-text-muted)' }}>
+                      No stock movements recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  movements.map((m) => (
+                    <tr key={m.id}>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+                        {new Date(m.created_at || m.occurred_on).toLocaleString()}
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>{m.product_name}</span>
+                        <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--admin-gold)' }}>{m.colour}</span>
+                      </td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>{m.sku}</td>
+                      <td>
+                        <span className="admin-badge" style={{ textTransform: 'capitalize' }}>
+                          {m.movement_type ? m.movement_type.replace('_', ' ') : 'Adjustment'}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 700, color: m.quantity > 0 ? 'var(--admin-success)' : 'var(--admin-danger)' }}>
+                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{m.balance_after}</td>
+                      <td style={{ fontSize: '0.85rem', color: 'var(--admin-silver)' }}>
+                        {m.notes || '—'}
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+                        {m.user_email || 'System'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Adjust Modal */}
+      {adjustModal.open && adjustModal.item && (
+        <div className="admin-modal-backdrop">
+          <div className="admin-modal">
+            <div className="admin-modal-header">
+              <h3 className="admin-modal-title">Adjust Physical Stock Count</h3>
+              <button
+                onClick={() => setAdjustModal({ open: false, item: null, newQty: '', reason: '' })}
+                className="admin-modal-close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleAdjustSubmit}>
+              <div className="admin-modal-body">
+                <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '4px' }}>
+                  <div style={{ fontWeight: 600, color: '#fff' }}>{adjustModal.item.product}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--admin-gold)' }}>
+                    {adjustModal.item.colour} • Current on hand: {adjustModal.item.stock_on_hand}
+                  </div>
+                </div>
+
+                <div className="admin-form-group">
+                  <label className="admin-label">New Exact On-Hand Quantity *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={adjustModal.newQty}
+                    onChange={(e) => setAdjustModal({ ...adjustModal, newQty: e.target.value })}
+                    className="admin-input"
+                    placeholder="e.g. 5"
+                  />
+                  <span className="admin-help-text">Directly sets the physical inventory count.</span>
+                </div>
+
+                <div className="admin-form-group">
+                  <label className="admin-label">Mandatory Reason / Audit Note *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adjustModal.reason}
+                    onChange={(e) => setAdjustModal({ ...adjustModal, reason: e.target.value })}
+                    className="admin-input"
+                    placeholder="e.g. Physical count discrepancy, damaged display piece, audit adjustment"
+                  />
+                  <span className="admin-help-text">Audit law requires a non-empty explanation for all adjustments.</span>
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setAdjustModal({ open: false, item: null, newQty: '', reason: '' })}
+                  className="btn btn-outline"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn btn-primary"
+                >
+                  {submitting ? 'Updating...' : 'Save Stock Adjustment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Receive Stock Modal */}
+      {receiveModal.open && receiveModal.item && (
+        <div className="admin-modal-backdrop">
+          <div className="admin-modal">
+            <div className="admin-modal-header">
+              <h3 className="admin-modal-title">Receive Stock Shipment</h3>
+              <button
+                onClick={() => setReceiveModal({ open: false, item: null, supplierId: '', quantity: '', unitCost: '', reference: '', notes: '' })}
+                className="admin-modal-close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleReceiveSubmit}>
+              <div className="admin-modal-body">
+                <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '4px' }}>
+                  <div style={{ fontWeight: 600, color: '#fff' }}>{receiveModal.item.product}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--admin-gold)' }}>
+                    Variant: {receiveModal.item.colour} (Current On Hand: {receiveModal.item.stock_on_hand})
+                  </div>
+                </div>
+
+                <div className="admin-form-group">
+                  <label className="admin-label">Quantity to Add (Units) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={receiveModal.quantity}
+                    onChange={(e) => setReceiveModal({ ...receiveModal, quantity: e.target.value })}
+                    className="admin-input"
+                    placeholder="e.g. 10"
+                  />
+                </div>
+
+                {suppliers.length > 0 && (
+                  <div className="admin-form-group">
+                    <label className="admin-label">Supplier</label>
+                    <select
+                      value={receiveModal.supplierId}
+                      onChange={(e) => setReceiveModal({ ...receiveModal, supplierId: e.target.value })}
+                      className="admin-select"
+                    >
+                      <option value="">Select supplier (optional)...</option>
+                      {suppliers.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {isSuperAdmin && (
+                  <div className="admin-form-group">
+                    <label className="admin-label">Unit Cost (₹)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={receiveModal.unitCost}
+                      onChange={(e) => setReceiveModal({ ...receiveModal, unitCost: e.target.value })}
+                      className="admin-input"
+                      placeholder="e.g. 12500"
+                    />
+                    <span className="admin-help-text">Used for weighted average acquisition cost calculation.</span>
+                  </div>
+                )}
+
+                <div className="admin-form-group">
+                  <label className="admin-label">PO / Delivery Reference</label>
+                  <input
+                    type="text"
+                    value={receiveModal.reference}
+                    onChange={(e) => setReceiveModal({ ...receiveModal, reference: e.target.value })}
+                    className="admin-input"
+                    placeholder="e.g. INV-2026-088"
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label className="admin-label">Notes</label>
+                  <input
+                    type="text"
+                    value={receiveModal.notes}
+                    onChange={(e) => setReceiveModal({ ...receiveModal, notes: e.target.value })}
+                    className="admin-input"
+                    placeholder="Optional receiving notes"
+                  />
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setReceiveModal({ open: false, item: null, supplierId: '', quantity: '', unitCost: '', reference: '', notes: '' })}
+                  className="btn btn-outline"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn btn-primary"
+                >
+                  {submitting ? 'Receiving...' : 'Confirm Receipt'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+export default InventoryManagement;
+
+========== src\components\ProductGallery.jsx ==========
+
+import React, { useState, useEffect } from 'react';
+
+export function ProductGallery({
+  mainImage,
+  additionalImages = [],
+  variantImage = null,
+  productName = 'Watch'
+}) {
+  const [activeImage, setActiveImage] = useState(variantImage || mainImage);
+  const [imageError, setImageError] = useState(false);
+
+  // When variant changes from parent, sync the active preview image
+  useEffect(() => {
+    if (variantImage) {
+      setActiveImage(variantImage);
+      setImageError(false);
+    }
+  }, [variantImage]);
+
+  // Combine unique images for thumbnail navigation
+  const allImages = Array.from(
+    new Set([mainImage, ...(additionalImages || []), ...(variantImage ? [variantImage] : [])])
+  ).filter(Boolean);
+
+  return (
+    <div className="product-gallery">
+      {/* Primary High-Resolution View */}
+      <div className="gallery-main-view">
+        {imageError ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: '24px',
+            textAlign: 'center',
+            backgroundColor: '#161616',
+            color: 'var(--color-silver)'
+          }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--color-gold)' }}>
+              TIMELESS TRENDS
+            </span>
+            <span style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+              {productName}
+            </span>
+          </div>
+        ) : (
+          <img
+            src={activeImage}
+            alt={`${productName} Catalogue View`}
+            className="gallery-main-image"
+            onError={() => setImageError(true)}
+          />
+        )}
+      </div>
+
+      {/* Thumbnails Navigation */}
+      {allImages.length > 1 && (
+        <div className="gallery-thumbnails" role="tablist" aria-label="Product image gallery thumbnails">
+          {allImages.map((imgUrl, index) => {
+            const isActive = activeImage === imgUrl;
+            return (
+              <button
+                key={index}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`View photo ${index + 1} of ${productName}`}
+                className={`gallery-thumb-btn ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveImage(imgUrl);
+                  setImageError(false);
+                }}
+              >
+                <img
+                  src={imgUrl}
+                  alt={`Thumbnail ${index + 1}`}
+                  loading="lazy"
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default ProductGallery;
+
+========== server\db.js ==========
+
+const Database = require('better-sqlite3');
+const fs = require('fs');
+const path = require('path');
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT,
+  password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'super_admin',
+  is_active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+
+CREATE TABLE IF NOT EXISTS suppliers (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, phone TEXT, notes TEXT, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+  description TEXT, image_url TEXT, display_order INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS offers (
+  id INTEGER PRIMARY KEY, title TEXT NOT NULL, code TEXT UNIQUE,
+  discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage','fixed')),
+  discount_value REAL NOT NULL CHECK (discount_value > 0),
+  scope TEXT NOT NULL DEFAULT 'all' CHECK (scope IN ('all','category','product')),
+  target_id TEXT, badge_text TEXT, banner_text TEXT,
+  start_date TEXT, end_date TEXT, is_active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS products (
+  id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL, brand TEXT, model TEXT,
+  slug TEXT NOT NULL UNIQUE, category TEXT, description TEXT,
+  selling_price REAL CHECK (selling_price IS NULL OR selling_price >= 0),
+  original_price REAL CHECK (original_price IS NULL OR original_price >= 0),
+  specs TEXT, stock_location TEXT,
+  is_new_arrival INTEGER NOT NULL DEFAULT 0, is_featured INTEGER NOT NULL DEFAULT 0,
+  display_priority INTEGER NOT NULL DEFAULT 0,
+  new_arrival_start TEXT, new_arrival_end TEXT,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published','archived')),
+  is_active INTEGER NOT NULL DEFAULT 1,
+  date_added TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS variants (
+  id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  sku TEXT NOT NULL UNIQUE, colour TEXT NOT NULL,
+  price_override REAL CHECK (price_override IS NULL OR price_override >= 0),
+  stock_on_hand INTEGER NOT NULL DEFAULT 0 CHECK (stock_on_hand >= 0),
+  reserved INTEGER NOT NULL DEFAULT 0 CHECK (reserved >= 0),
+  min_stock INTEGER NOT NULL DEFAULT 2 CHECK (min_stock >= 0),
+  avg_cost REAL CHECK (avg_cost IS NULL OR avg_cost >= 0),
+  is_active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL,
+  UNIQUE (product_id, colour));
+
+CREATE TABLE IF NOT EXISTS images (
+  id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  variant_id INTEGER REFERENCES variants(id) ON DELETE SET NULL,
+  original_path TEXT NOT NULL, web_path TEXT NOT NULL, alt TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS purchases (
+  id INTEGER PRIMARY KEY, supplier_id INTEGER REFERENCES suppliers(id), received_on TEXT NOT NULL,
+  reference TEXT, notes TEXT, total_cost REAL, paid_amount REAL NOT NULL DEFAULT 0,
+  created_by INTEGER, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+  id INTEGER PRIMARY KEY, occurred_at TEXT NOT NULL, occurred_on TEXT NOT NULL,
+  product_id INTEGER NOT NULL, variant_id INTEGER NOT NULL REFERENCES variants(id),
+  movement_type TEXT NOT NULL CHECK (movement_type IN
+    ('purchase_received','sale','customer_return','customer_return_damaged','supplier_return','damage_loss','manual_correction')),
+  quantity_change INTEGER NOT NULL, previous_qty INTEGER NOT NULL, new_qty INTEGER NOT NULL,
+  non_sellable_qty INTEGER NOT NULL DEFAULT 0, unit_cost REAL, reason TEXT,
+  order_id INTEGER, purchase_id INTEGER, user_id INTEGER);
+CREATE INDEX IF NOT EXISTS idx_mov_on ON stock_movements(occurred_on);
+CREATE INDEX IF NOT EXISTS idx_mov_variant ON stock_movements(variant_id);
+
+CREATE TABLE IF NOT EXISTS enquiries (
+  id INTEGER PRIMARY KEY, ref TEXT NOT NULL UNIQUE,
+  product_id INTEGER REFERENCES products(id), variant_id INTEGER REFERENCES variants(id),
+  status TEXT NOT NULL DEFAULT 'clicked' CHECK (status IN ('clicked','received','converted','closed')),
+  source TEXT, customer_name TEXT, customer_contact TEXT, notes TEXT,
+  created_at TEXT NOT NULL, created_on TEXT NOT NULL, confirmed_at TEXT, order_id INTEGER);
+CREATE INDEX IF NOT EXISTS idx_enq_on ON enquiries(created_on);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY, order_no TEXT NOT NULL UNIQUE, order_date TEXT NOT NULL,
+  customer_name TEXT, customer_contact TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN
+    ('enquiry','pending','confirmed','processing','ready','completed','cancelled','partially_returned','returned')),
+  notes TEXT, enquiry_id INTEGER REFERENCES enquiries(id), cancel_reason TEXT,
+  completed_on TEXT, created_by INTEGER, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(order_date);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id INTEGER NOT NULL, variant_id INTEGER NOT NULL REFERENCES variants(id),
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  unit_price REAL NOT NULL CHECK (unit_price >= 0),
+  line_discount REAL NOT NULL DEFAULT 0 CHECK (line_discount >= 0),
+  stock_state TEXT NOT NULL DEFAULT 'none' CHECK (stock_state IN ('none','reserved','sold','released')),
+  unit_cost_at_sale REAL, sold_on TEXT, returned_qty INTEGER NOT NULL DEFAULT 0);
+CREATE INDEX IF NOT EXISTS idx_items_sold ON order_items(sold_on);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('payment','refund')), amount REAL NOT NULL CHECK (amount > 0),
+  paid_on TEXT NOT NULL, method TEXT, note TEXT, user_id INTEGER, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS returns (
+  id INTEGER PRIMARY KEY, order_item_id INTEGER NOT NULL REFERENCES order_items(id),
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  condition TEXT NOT NULL CHECK (condition IN ('sellable','damaged')),
+  returned_on TEXT NOT NULL, refund_value REAL NOT NULL, reason TEXT, user_id INTEGER, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id INTEGER PRIMARY KEY, expense_on TEXT NOT NULL, category TEXT NOT NULL,
+  amount REAL NOT NULL CHECK (amount > 0), description TEXT, payment_method TEXT,
+  supplier_id INTEGER REFERENCES suppliers(id), created_by INTEGER, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_exp_on ON expenses(expense_on);
+
+CREATE TABLE IF NOT EXISTS savings_entries (
+  id INTEGER PRIMARY KEY, entry_on TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('deposit','withdrawal')),
+  amount REAL NOT NULL CHECK (amount > 0), note TEXT, created_at TEXT NOT NULL);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INTEGER PRIMARY KEY, at TEXT NOT NULL, user_id INTEGER, action TEXT NOT NULL,
+  entity TEXT, entity_id TEXT, detail TEXT);
+`;
+
+function migrateDb(db) {
+  // Apply migrations safely for existing databases
+  const userCols = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+  if (!userCols.includes('is_active')) {
+    try { db.exec("ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"); } catch {}
+  }
+
+  const prodCols = db.prepare("PRAGMA table_info(products)").all().map(c => c.name);
+  if (!prodCols.includes('display_priority')) {
+    try { db.exec("ALTER TABLE products ADD COLUMN display_priority INTEGER NOT NULL DEFAULT 0"); } catch {}
+  }
+  if (!prodCols.includes('new_arrival_start')) {
+    try { db.exec("ALTER TABLE products ADD COLUMN new_arrival_start TEXT"); } catch {}
+  }
+  if (!prodCols.includes('new_arrival_end')) {
+    try { db.exec("ALTER TABLE products ADD COLUMN new_arrival_end TEXT"); } catch {}
+  }
+
+  // Seed default categories if none exist
+  const catCount = db.prepare("SELECT COUNT(*) AS count FROM categories").get().count;
+  if (catCount === 0) {
+    const insertCat = db.prepare("INSERT INTO categories (slug, name, description, display_order, created_at) VALUES (?, ?, ?, ?, ?)");
+    const now = new Date().toISOString();
+    insertCat.run('everyday-classics', 'Everyday Classics', 'Timeless dials and versatile designs crafted for effortless daily wear', 1, now);
+    insertCat.run('trending', 'Trending & Modern', 'Contemporary silhouettes and bold aesthetics making waves right now', 2, now);
+    insertCat.run('mens', "Men's Collection", 'Sophisticated chronographs, robust bracelets, and masculine accents', 3, now);
+    insertCat.run('womens', "Women's Collection", 'Delicate dials, elegant mesh bracelets, and graceful finishes', 4, now);
+  }
+}
+
+function openDb(file) {
+  if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
+  const db = new Database(file);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  db.exec(SCHEMA);
+  migrateDb(db);
+  return db;
+}
+
+module.exports = { openDb, SCHEMA };
+
+========== server\inventory.js ==========
+
+// Core stock logic. EVERY change to variants.stock_on_hand goes through recordMovement(),
+// so the audit trail (stock_movements) can never drift from the balances.
+// Reservations (variants.reserved) are NOT stock movements: units still physically exist.
+//   available (sellable now) = stock_on_hand - reserved
+const { HttpError, localDate, audit } = require('./util');
+
+function getVariant(db, id) {
+  const v = db.prepare(`SELECT v.*, p.is_active AS product_active, p.name AS product_name
+    FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?`).get(id);
+  if (!v) throw new HttpError(404, `Variant ${id} not found`);
+  return v;
+}
+
+function variantStatus(v) {
+  if (!v.is_active || !v.product_active) return 'inactive';
+  const available = v.stock_on_hand - v.reserved;
+  if (available <= 0) return 'out_of_stock';
+  if (available <= v.min_stock) return 'low_stock'; // "at or below the reorder level"
+  return 'in_stock';
+}
+
+function recordMovement(db, { variantId, type, delta, reason = null, unitCost = null, orderId = null,
+  purchaseId = null, userId = null, nonSellable = 0, occurredOn }) {
+  const v = getVariant(db, variantId);
+  const prev = v.stock_on_hand;
+  const next = prev + delta;
+  if (next < 0) throw new HttpError(409, `Not enough stock for ${v.sku}: have ${prev}, change ${delta}`);
+  if (next < v.reserved) {
+    throw new HttpError(409, `Would drop ${v.sku} below its ${v.reserved} reserved unit(s)`);
+  }
+  db.prepare('UPDATE variants SET stock_on_hand = ? WHERE id = ?').run(next, variantId);
+  const now = new Date();
+  db.prepare(`INSERT INTO stock_movements (occurred_at, occurred_on, product_id, variant_id, movement_type,
+    quantity_change, previous_qty, new_qty, non_sellable_qty, unit_cost, reason, order_id, purchase_id, user_id)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(now.toISOString(), occurredOn || localDate(now), v.product_id,
+    variantId, type, delta, prev, next, nonSellable, unitCost, reason, orderId, purchaseId, userId);
+  return { previous: prev, next };
+}
+
+const posInt = (n, name) => {
+  if (!Number.isInteger(n) || n <= 0) throw new HttpError(400, `${name} must be a positive whole number`);
+  return n;
+};
+const needReason = (r) => {
+  if (!r || !String(r).trim()) throw new HttpError(400, 'A reason is required for this stock change');
+  return String(r).trim();
+};
+
+// Supplier purchase: increases stock, updates weighted-average cost, records cash paid out.
+function receiveStock(db, { supplierId = null, receivedOn, items, paidAmount, reference, notes, userId }) {
+  if (!Array.isArray(items) || !items.length) throw new HttpError(400, 'items required');
+  return db.transaction(() => {
+    const on = receivedOn || localDate();
+    let total = 0; let anyCost = false;
+    for (const it of items) {
+      posInt(it.quantity, 'quantity');
+      if (it.unitCost != null && !(it.unitCost >= 0)) throw new HttpError(400, 'unitCost must be >= 0');
+      if (it.unitCost != null) { total += it.quantity * it.unitCost; anyCost = true; }
+    }
+    const paid = paidAmount != null ? paidAmount : total; // default: paid in full for costed lines
+    if (!(paid >= 0)) throw new HttpError(400, 'paidAmount must be >= 0');
+    const pid = db.prepare(`INSERT INTO purchases (supplier_id, received_on, reference, notes, total_cost,
+      paid_amount, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)`)
+      .run(supplierId, on, reference || null, notes || null, anyCost ? total : null, paid, userId,
+        new Date().toISOString()).lastInsertRowid;
+    for (const it of items) {
+      const v = getVariant(db, it.variantId);
+      if (it.unitCost != null) {
+        const avg = (v.avg_cost == null || v.stock_on_hand <= 0) ? it.unitCost
+          : (v.stock_on_hand * v.avg_cost + it.quantity * it.unitCost) / (v.stock_on_hand + it.quantity);
+        db.prepare('UPDATE variants SET avg_cost = ? WHERE id = ?').run(Math.round(avg * 10000) / 10000, v.id);
+      }
+      recordMovement(db, { variantId: v.id, type: 'purchase_received', delta: it.quantity, unitCost: it.unitCost ?? null,
+        reason: reference ? `Purchase ${reference}` : 'Stock received', purchaseId: pid, userId, occurredOn: on });
+    }
+    audit(db, userId, 'stock.receive', 'purchase', pid, { items });
+    return pid;
+  })();
+}
+
+// Manual correction to a physical count. Reason mandatory; history preserved.
+function adjustStock(db, { variantId, newQuantity, reason, userId }) {
+  return db.transaction(() => {
+    needReason(reason);
+    if (!Number.isInteger(newQuantity) || newQuantity < 0) throw new HttpError(400, 'newQuantity must be a whole number >= 0');
+    const v = getVariant(db, variantId);
+    const delta = newQuantity - v.stock_on_hand;
+    if (delta === 0) throw new HttpError(400, 'Counted quantity equals recorded quantity; nothing to adjust');
+    recordMovement(db, { variantId, type: 'manual_correction', delta, reason: String(reason).trim(), userId });
+    audit(db, userId, 'stock.adjust', 'variant', variantId, { from: v.stock_on_hand, to: newQuantity, reason });
+    return { previous: v.stock_on_hand, next: newQuantity };
+  })();
+}
+
+function removeStock(db, { variantId, quantity, type, reason, userId }) {
+  if (!['damage_loss', 'supplier_return'].includes(type)) throw new HttpError(400, 'bad type');
+  return db.transaction(() => {
+    posInt(quantity, 'quantity'); needReason(reason);
+    recordMovement(db, { variantId, type, delta: -quantity, reason: String(reason).trim(), userId });
+    audit(db, userId, `stock.${type}`, 'variant', variantId, { quantity, reason });
+  })();
+}
+
+// Reconcile physical counts: only discrepancies are adjusted; each needs a reason.
+function reconcile(db, { counts, userId }) {
+  return db.transaction(() => {
+    const out = [];
+    for (const c of counts) {
+      const v = getVariant(db, c.variantId);
+      if (v.stock_on_hand === c.counted) { out.push({ variantId: c.variantId, changed: false }); continue; }
+      adjustStock(db, { variantId: c.variantId, newQuantity: c.counted, reason: c.reason, userId });
+      out.push({ variantId: c.variantId, changed: true, from: v.stock_on_hand, to: c.counted });
+    }
+    return out;
+  })();
+}
+
+// ---- order-driven stock states (idempotent: guarded by order_items.stock_state) ----
+function reserveItem(db, item) {
+  if (item.stock_state === 'reserved' || item.stock_state === 'sold') return;
+  const v = getVariant(db, item.variant_id);
+  if (!v.is_active || !v.product_active) throw new HttpError(409, `${v.sku} is inactive`);
+  if (v.stock_on_hand - v.reserved < item.quantity) {
+    throw new HttpError(409, `Not enough available stock for ${v.sku} (available ${v.stock_on_hand - v.reserved}, needed ${item.quantity})`);
+  }
+  db.prepare('UPDATE variants SET reserved = reserved + ? WHERE id = ?').run(item.quantity, item.variant_id);
+  db.prepare("UPDATE order_items SET stock_state = 'reserved' WHERE id = ?").run(item.id);
+  item.stock_state = 'reserved';
+}
+
+function releaseItem(db, item) {
+  if (item.stock_state !== 'reserved') return;
+  db.prepare('UPDATE variants SET reserved = reserved - ? WHERE id = ?').run(item.quantity, item.variant_id);
+  db.prepare("UPDATE order_items SET stock_state = 'released' WHERE id = ?").run(item.id);
+  item.stock_state = 'released';
+}
+
+function sellItem(db, item, { orderId, userId, soldOn }) {
+  if (item.stock_state === 'sold') return;
+  reserveItem(db, item);
+  const v = getVariant(db, item.variant_id);
+  db.prepare('UPDATE variants SET reserved = reserved - ? WHERE id = ?').run(item.quantity, item.variant_id);
+  recordMovement(db, { variantId: item.variant_id, type: 'sale', delta: -item.quantity, orderId, userId,
+    reason: `Sale (order ${orderId})`, occurredOn: soldOn, unitCost: v.avg_cost });
+  db.prepare("UPDATE order_items SET stock_state = 'sold', unit_cost_at_sale = ?, sold_on = ? WHERE id = ?")
+    .run(v.avg_cost, soldOn, item.id);
+  item.stock_state = 'sold';
+}
+
+function returnItem(db, { orderItemId, quantity, condition, reason, userId, returnedOn }) {
+  return db.transaction(() => {
+    posInt(quantity, 'quantity');
+    if (!['sellable', 'damaged'].includes(condition)) throw new HttpError(400, "condition must be 'sellable' or 'damaged'");
+    const item = db.prepare('SELECT * FROM order_items WHERE id = ?').get(orderItemId);
+    if (!item) throw new HttpError(404, 'Order item not found');
+    if (item.stock_state !== 'sold') throw new HttpError(409, 'Only items that were sold can be returned');
+    if (quantity > item.quantity - item.returned_qty) throw new HttpError(409, 'Return quantity exceeds units sold');
+    const on = returnedOn || localDate();
+    const netUnit = (item.quantity * item.unit_price - item.line_discount) / item.quantity;
+    const refundValue = Math.round(netUnit * quantity * 100) / 100;
+    if (condition === 'sellable') {
+      recordMovement(db, { variantId: item.variant_id, type: 'customer_return', delta: quantity, orderId: item.order_id,
+        reason: reason || 'Customer return (sellable)', userId, occurredOn: on });
+    } else {
+      recordMovement(db, { variantId: item.variant_id, type: 'customer_return_damaged', delta: 0, nonSellable: quantity,
+        orderId: item.order_id, reason: reason || 'Customer return (damaged, not restocked)', userId, occurredOn: on });
+    }
+    db.prepare('UPDATE order_items SET returned_qty = returned_qty + ? WHERE id = ?').run(quantity, item.id);
+    db.prepare(`INSERT INTO returns (order_item_id, quantity, condition, returned_on, refund_value, reason, user_id, created_at)
+      VALUES (?,?,?,?,?,?,?,?)`).run(item.id, quantity, condition, on, refundValue, reason || null, userId, new Date().toISOString());
+    const rem = db.prepare(`SELECT SUM(quantity - returned_qty) AS left FROM order_items
+      WHERE order_id = ? AND stock_state = 'sold'`).get(item.order_id).left;
+    db.prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?')
+      .run(rem === 0 ? 'returned' : 'partially_returned', new Date().toISOString(), item.order_id);
+    audit(db, userId, 'order.return', 'order_item', item.id, { quantity, condition, refundValue });
+    return { refundValue };
+  })();
+}
+
+module.exports = { getVariant, variantStatus, recordMovement, receiveStock, adjustStock, removeStock, reconcile,
+  reserveItem, releaseItem, sellItem, returnItem };
+
+========== RELEVANT BACKEND ROUTES ==========
+
+
+--- Line 5 ---
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
+const multer = require('multer');
+const sharp = require('sharp');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
+
+--- Line 41 ---
+  owner: ['*'], // backward compatibility with v2
+  inventory_manager: [
+    'products:read', 'products:write',
+    'inventory:read', 'inventory:write',
+    'categories:read', 'categories:write',
+    'media:read', 'media:write',
+    'orders:read', 'orders:write',
+    'enquiries:read', 'enquiries:write'
+  ],
+
+--- Line 174 ---
+  const orig = path.join(config.uploadDir, 'originals'); // never served publicly
+  fs.mkdirSync(web, { recursive: true });
+  fs.mkdirSync(orig, { recursive: true });
+  app.use('/uploads', express.static(web, { maxAge: '7d', index: false }));
+
+  const noLimit = (req, res, next) => next();
+  const limiter = (windowMs, max) => (opts.noRateLimit ? noLimit : rateLimit({ windowMs, max, standardHeaders: true, legacyHeaders: false }));
+
+  // ---------------- Public API (no private costs, exact stock, or suppliers) ----------------
+
+--- Line 307 ---
+    path: '/'
+  };
+
+  auth.post('/login', limiter(15 * 60_000, 10), wrap((req, res) => {
+    const b = parse(z.object({ email: z.string().email(), password: z.string().min(1).max(200) }), req.body);
+    const u = db.prepare('SELECT * FROM users WHERE email = ?').get(b.email.toLowerCase());
+    const ok = bcrypt.compareSync(b.password, u ? u.password_hash : '$2a$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidi');
+
+    if (!u || !ok) {
+
+--- Line 330 ---
+    res.json({ id: u.id, email: u.email, name: u.name, role: u.role === 'owner' ? 'super_admin' : u.role });
+  }));
+
+  auth.post('/logout', (req, res) => {
+    if (req.cookies.tt_session) {
+      db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha(req.cookies.tt_session));
+    }
+    res.clearCookie('tt_session', { path: '/' });
+    res.json({ ok: true });
+
+--- Line 824 ---
+
+  admin.get('/products/:id', (req, res) => res.json(productRow(Number(req.params.id), req.user.role)));
+
+  admin.post('/products', requirePermission('products:write'), wrap((req, res) => {
+    const b = parse(productSchema.extend({ variants: z.array(variantSchema).min(1) }), req.body);
+    const id = db.transaction(() => {
+      const now = new Date().toISOString();
+      const pid = db.prepare(`
+        INSERT INTO products (code, name, brand, model, slug, category, description, selling_price, original_price,
+
+--- Line 850 ---
+    res.status(201).json(productRow(id, req.user.role));
+  }));
+
+  admin.put('/products/:id', requirePermission('products:write'), wrap((req, res) => {
+    const id = Number(req.params.id);
+    const cur = db.prepare('SELECT * FROM products WHERE id=?').get(id);
+    if (!cur) throw new HttpError(404, 'Product not found');
+    const b = parse(productSchema.partial(), req.body);
+
+
+--- Line 870 ---
+    res.json(productRow(id, req.user.role));
+  }));
+
+  admin.post('/products/:id/archive', requirePermission('products:write'), wrap((req, res) => {
+    const id = Number(req.params.id);
+    const p = db.prepare('SELECT id FROM products WHERE id=?').get(id);
+    if (!p) throw new HttpError(404, 'Product not found');
+    db.prepare("UPDATE products SET status='archived', updated_at=? WHERE id=?").run(new Date().toISOString(), id);
+    audit(db, req.user.id, 'product.archive', 'product', id);
+
+--- Line 879 ---
+    res.json(productRow(id, req.user.role));
+  }));
+
+  admin.post('/products/:id/restore', requirePermission('products:write'), wrap((req, res) => {
+    const id = Number(req.params.id);
+    const p = db.prepare('SELECT id FROM products WHERE id=?').get(id);
+    if (!p) throw new HttpError(404, 'Product not found');
+    db.prepare("UPDATE products SET status='published', updated_at=? WHERE id=?").run(new Date().toISOString(), id);
+    audit(db, req.user.id, 'product.restore', 'product', id);
+
+--- Line 888 ---
+    res.json(productRow(id, req.user.role));
+  }));
+
+  admin.post('/products/:id/duplicate', requirePermission('products:write'), wrap((req, res) => {
+    const sourceId = Number(req.params.id);
+    const cur = db.prepare('SELECT * FROM products WHERE id=?').get(sourceId);
+    if (!cur) throw new HttpError(404, 'Product not found');
+
+    const newId = db.transaction(() => {
+
+--- Line 929 ---
+    res.status(201).json(productRow(newId, req.user.role));
+  }));
+
+  admin.post('/products/bulk', requirePermission('products:write'), wrap((req, res) => {
+    const b = parse(z.object({
+      action: z.enum(['activate', 'deactivate', 'archive', 'publish', 'set_category']),
+      productIds: z.array(z.number().int()).min(1),
+      category: z.string().max(60).optional()
+    }), req.body);
+
+--- Line 955 ---
+    res.json({ ok: true, modifiedCount: b.productIds.length });
+  }));
+
+  admin.post('/products/:id/variants', requirePermission('products:write'), wrap((req, res) => {
+    const id = Number(req.params.id);
+    const p = db.prepare('SELECT code FROM products WHERE id=?').get(id);
+    if (!p) throw new HttpError(404, 'Product not found');
+    const vid = addVariant(id, p.code, parse(variantSchema, req.body));
+    audit(db, req.user.id, 'variant.create', 'variant', vid);
+
+--- Line 964 ---
+    res.status(201).json(productRow(id, req.user.role));
+  }));
+
+  admin.put('/variants/:id', requirePermission('products:write'), wrap((req, res) => {
+    const id = Number(req.params.id);
+    const v = inv.getVariant(db, id);
+    const b = parse(variantSchema.partial().extend({ is_active: z.boolean().optional() }), req.body);
+    const m = { ...b };
+    if ('is_active' in m) m.is_active = m.is_active ? 1 : 0;
+
+--- Line 991 ---
+  }));
+
+  // Images upload and management
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 12 * 1024 * 1024 },
+    fileFilter: (req, f, cb) => cb(/^image\/(jpeg|png|webp)$/.test(f.mimetype) ? null : new HttpError(400, 'Only JPG, PNG or WebP images'), /^image\/(jpeg|png|webp)$/.test(f.mimetype))
+  });
+
+
+--- Line 992 ---
+
+  // Images upload and management
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 12 * 1024 * 1024 },
+    fileFilter: (req, f, cb) => cb(/^image\/(jpeg|png|webp)$/.test(f.mimetype) ? null : new HttpError(400, 'Only JPG, PNG or WebP images'), /^image\/(jpeg|png|webp)$/.test(f.mimetype))
+  });
+
+  admin.post('/products/:id/images', requirePermission('media:write'), upload.single('image'), wrap(async (req, res) => {
+
+--- Line 997 ---
+    fileFilter: (req, f, cb) => cb(/^image\/(jpeg|png|webp)$/.test(f.mimetype) ? null : new HttpError(400, 'Only JPG, PNG or WebP images'), /^image\/(jpeg|png|webp)$/.test(f.mimetype))
+  });
+
+  admin.post('/products/:id/images', requirePermission('media:write'), upload.single('image'), wrap(async (req, res) => {
+    const pid = Number(req.params.id);
+    productRow(pid);
+    if (!req.file) throw new HttpError(400, 'Image file required');
+
+    const variantId = req.body.variantId ? Number(req.body.variantId) : null;
+
+--- Line 1077 ---
+    items: z.array(z.object({ variantId: z.number().int(), quantity: z.number().int().positive(), unitCost: money.nullish() })).min(1)
+  });
+
+  admin.post('/stock/receive', requirePermission('inventory:write'), wrap((req, res) => {
+    const b = parse(receiveSchema, req.body);
+    res.status(201).json({ purchaseId: inv.receiveStock(db, { ...b, userId: req.user.id }) });
+  }));
+
+  admin.post('/stock/adjust', requirePermission('inventory:write'), wrap((req, res) => {
+
+--- Line 1082 ---
+    res.status(201).json({ purchaseId: inv.receiveStock(db, { ...b, userId: req.user.id }) });
+  }));
+
+  admin.post('/stock/adjust', requirePermission('inventory:write'), wrap((req, res) => {
+    const b = parse(z.object({
+      variantId: z.number().int(),
+      newQuantity: z.number().int().min(0),
+      reason: z.string().refine((s) => s.trim().length > 0, 'A non-empty reason is mandatory for physical adjustments')
+    }), req.body);
+
+--- Line 1091 ---
+    res.json(inv.adjustStock(db, { ...b, userId: req.user.id }));
+  }));
+
+  admin.post('/stock/remove', requirePermission('inventory:write'), wrap((req, res) => {
+    const b = parse(z.object({
+      variantId: z.number().int(),
+      quantity: z.number().int().positive(),
+      type: z.enum(['damage_loss', 'supplier_return']),
+      reason: z.string().refine((s) => s.trim().length > 0, 'A non-empty reason is mandatory')
+
+--- Line 1102 ---
+    res.json({ ok: true });
+  }));
+
+  admin.post('/stock/reconcile', requirePermission('inventory:write'), wrap((req, res) => {
+    const b = parse(z.object({
+      counts: z.array(z.object({
+        variantId: z.number().int(),
+        counted: z.number().int().min(0),
+        reason: z.string().optional()
+
+--- Line 1140 ---
+
+  // Suppliers
+  admin.get('/suppliers', (req, res) => res.json(db.prepare('SELECT * FROM suppliers ORDER BY name').all()));
+  admin.post('/suppliers', requirePermission('inventory:write'), wrap((req, res) => {
+    const b = parse(z.object({ name: z.string().min(1).max(100), phone: z.string().max(30).nullish(), notes: z.string().max(500).nullish() }), req.body);
+    const id = db.prepare('INSERT INTO suppliers (name, phone, notes, created_at) VALUES (?,?,?,?)')
+      .run(b.name, b.phone ?? null, b.notes ?? null, new Date().toISOString()).lastInsertRowid;
+    audit(db, req.user.id, 'supplier.create', 'supplier', id);
+    res.status(201).json({ id });
+
+--- Line 1430 ---
+  // Frontend (production build) serving
+  const dist = path.join(config.root, 'dist');
+  if (fs.existsSync(path.join(dist, 'index.html'))) {
+    app.use(express.static(dist, { index: false, maxAge: '1h' }));
+    app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => res.sendFile(path.join(dist, 'index.html')));
+  }
+
+  app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
+
+--- Line 1440 ---
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, req, res, next) => {
+    if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
+    if (err instanceof multer.MulterError) return res.status(400).json({ error: err.message });
+    if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid JSON' });
+    if (/SQLITE_CONSTRAINT/.test(String(err.code || err.message))) return res.status(409).json({ error: 'Database constraint violated: ' + err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  });

@@ -43,6 +43,7 @@ export function Footer() {
               <li><Link to="/about" className="footer-link">About Brand</Link></li>
               <li><Link to="/contact" className="footer-link">Contact & WhatsApp</Link></li>
               <li><Link to="/about#process" className="footer-link">How Enquiry Works</Link></li>
+              <li><Link to="/admin/login" className="footer-link">Admin Login</Link></li>
             </ul>
           </div>
 

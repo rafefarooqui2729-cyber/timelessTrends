@@ -26,7 +26,7 @@ export function ProductGallery({
     <div className="product-gallery">
       {/* Primary High-Resolution View */}
       <div className="gallery-main-view">
-        {imageError ? (
+        {!activeImage || imageError ? (
           <div style={{
             display: 'flex',
             flexDirection: 'column',

@@ -1,15 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, Shield, Clock, Compass, Gem } from 'lucide-react';
 import { siteConfig } from '../config/siteConfig';
-import { getFeaturedProducts, getNewArrivals, getCategoriesWithCounts } from '../utils/products';
+import { fetchPublicProducts } from '../utils/publicProductsApi';
 import { ProductGrid } from '../components/ProductGrid';
 import { WhatsAppButton } from '../components/WhatsAppButton';
 
 export function Home() {
-  const featuredWatches = getFeaturedProducts().slice(0, 4);
-  const newArrivals = getNewArrivals().slice(0, 4);
-  const categories = getCategoriesWithCounts().filter(c => c.id !== 'all');
+  const [featuredWatches, setFeaturedWatches] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const categories = (siteConfig.categories || []).filter(c => c.id !== 'all');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicProducts()
+      .then((all) => {
+        if (!cancelled) {
+          setFeaturedWatches(all.filter((p) => p.featured).slice(0, 4));
+          setNewArrivals(all.filter((p) => p.isNewArrival).slice(0, 4));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="home-page">
@@ -25,7 +41,8 @@ export function Home() {
               </div>
 
               <h1 className="hero-title">
-                Where every second speaks <span>style, class & confidence.</span>
+                Find your style. Choose your watch.
+                <span>Explore watches for every occasion.</span>
               </h1>
 
               <p className="hero-tagline">
@@ -210,9 +227,11 @@ export function Home() {
           <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', margin: '16px 0 24px' }}>
             "{siteConfig.closingStatement}"
           </h2>
-          <p style={{ fontSize: '1.05rem', color: 'var(--color-text-secondary)', marginBottom: '32px', lineHeight: 1.7 }}>
-            We believe a watch is more than an instrument to measure hours — it is a reflection of your personality, an emblem of your achievements, and the finishing touch to your presence.
-          </p>
+          
+<p style={{ fontSize: '1.05rem', color: 'var(--color-text-secondary)', marginBottom: '32px', lineHeight: 1.7 }}>
+  Discover a variety of watch designs for everyday wear, work, and special occasions. Explore the collection and contact us on WhatsApp for product details, pricing, and availability.
+</p>
+
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link to="/shop" className="btn btn-primary">
               <span>View Full Catalogue</span>

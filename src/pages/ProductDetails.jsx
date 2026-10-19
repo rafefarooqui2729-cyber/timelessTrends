@@ -1,33 +1,225 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, ShieldCheck, Truck, RefreshCw, MessageCircle } from 'lucide-react';
-import { getProductBySlug, getRelatedProducts } from '../utils/products';
-import { formatCurrency, hasValidPrice } from '../utils/formatCurrency';
+import { ChevronRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+
+import {
+  fetchPublicProductBySlug,
+  fetchPublicProducts
+} from '../utils/publicProductsApi';
+
+import {
+  formatCurrency,
+  hasValidPrice
+} from '../utils/formatCurrency';
+
 import { ProductGallery } from '../components/ProductGallery';
 import { ColorVariantSelector } from '../components/ColorVariantSelector';
 import { WhatsAppButton } from '../components/WhatsAppButton';
 import { ProductGrid } from '../components/ProductGrid';
-import { siteConfig } from '../config/siteConfig';
+
+const STOCK_REFRESH_INTERVAL = 15000;
 
 export function ProductDetails() {
   const { slug } = useParams();
-  const product = getProductBySlug(slug);
 
-  // Scroll to top when slug changes
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [relatedWatches, setRelatedWatches] = useState([]);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [stockUpdating, setStockUpdating] = useState(false);
+
+  const refreshInProgress = useRef(false);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [slug]);
 
-  // Handle Unknown Product Slug gracefully
-  if (!product) {
+  // Initial product loading
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProduct() {
+      setLoading(true);
+      setError('');
+      setProduct(null);
+      setSelectedVariantId(null);
+      setRelatedWatches([]);
+
+      try {
+        const watch = await fetchPublicProductBySlug(slug);
+
+        if (cancelled) return;
+
+        setProduct(watch);
+
+        if (watch?.variants?.length) {
+          setSelectedVariantId(watch.variants[0].id);
+        }
+
+        if (watch) {
+          try {
+            const all = await fetchPublicProducts();
+
+            if (cancelled) return;
+
+            const others = all.filter(
+              (item) => item.id !== watch.id
+            );
+
+            const sameCategory = others.filter(
+              (item) => item.category === watch.category
+            );
+
+            const otherCategories = others.filter(
+              (item) => item.category !== watch.category
+            );
+
+            setRelatedWatches(
+              [...sameCategory, ...otherCategories].slice(0, 4)
+            );
+          } catch {
+            // Related watches are optional.
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err.message || 'Unable to load timepiece details.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  // Automatically refresh product availability.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshStock() {
+      if (document.visibilityState === 'hidden') return;
+      if (refreshInProgress.current) return;
+
+      refreshInProgress.current = true;
+      setStockUpdating(true);
+
+      try {
+        const updatedProduct =
+          await fetchPublicProductBySlug(slug);
+
+        if (cancelled) return;
+
+        if (updatedProduct) {
+          setProduct(updatedProduct);
+
+          setSelectedVariantId((previousId) => {
+            const stillExists = updatedProduct.variants?.some(
+              (variant) => variant.id === previousId
+            );
+
+            if (stillExists) return previousId;
+
+            return updatedProduct.variants?.[0]?.id ?? null;
+          });
+
+          setError('');
+        } else {
+          // Product may have been unpublished.
+          setProduct(null);
+        }
+      } catch {
+        // Do not overwrite the existing product when
+        // a temporary network request fails.
+      } finally {
+        refreshInProgress.current = false;
+
+        if (!cancelled) {
+          setStockUpdating(false);
+        }
+      }
+    }
+
+    const timer = window.setInterval(
+      refreshStock,
+      STOCK_REFRESH_INTERVAL
+    );
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [slug]);
+
+  if (loading) {
     return (
-      <div className="section container" style={{ textAlign: 'center', padding: '100px 20px' }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', marginBottom: '16px' }}>
-          Watch Not Found
-        </h2>
-        <p style={{ color: 'var(--color-text-secondary)', maxWidth: '480px', margin: '0 auto 32px' }}>
-          The timepiece you are looking for may have been updated, relocated, or is no longer listed in our active catalogue.
+      <div
+        className="section container"
+        style={{
+          textAlign: 'center',
+          padding: '120px 20px'
+        }}
+      >
+        <p
+          style={{
+            color: 'var(--color-gold)',
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.4rem'
+          }}
+        >
+          TIMELESS TRENDS
         </p>
+
+        <p
+          style={{
+            color: 'var(--color-text-secondary)',
+            marginTop: '8px'
+          }}
+        >
+          Loading timepiece details...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        className="section container"
+        style={{
+          textAlign: 'center',
+          padding: '100px 20px'
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '2.4rem',
+            marginBottom: '16px'
+          }}
+        >
+          Catalogue Connection Issue
+        </h2>
+
+        <p
+          style={{
+            color: 'var(--color-text-secondary)',
+            maxWidth: '480px',
+            margin: '0 auto 32px'
+          }}
+        >
+          {error}
+        </p>
+
         <Link to="/shop" className="btn btn-primary">
           <ArrowLeft size={16} />
           <span>Back to All Watches</span>
@@ -36,126 +228,261 @@ export function ProductDetails() {
     );
   }
 
-  // State for selected colour variant
-  const initialVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
-  const [selectedVariant, setSelectedVariant] = useState(initialVariant);
+  if (!product) {
+    return (
+      <div
+        className="section container"
+        style={{
+          textAlign: 'center',
+          padding: '100px 20px'
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '2.4rem',
+            marginBottom: '16px'
+          }}
+        >
+          Watch Not Found
+        </h2>
 
-  // Sync selected variant if product changes
-  useEffect(() => {
-    setSelectedVariant(product.variants && product.variants.length > 0 ? product.variants[0] : null);
-  }, [product]);
+        <p
+          style={{
+            color: 'var(--color-text-secondary)',
+            maxWidth: '480px',
+            margin: '0 auto 32px'
+          }}
+        >
+          This timepiece may no longer be available in our
+          published catalogue.
+        </p>
 
-  const hasVariants = product.variants && product.variants.length > 0;
-  const isDiscounted = product.originalPrice && product.price && product.originalPrice > product.price;
-  const relatedWatches = getRelatedProducts(product, 4);
-  const hasSpecs = product.specifications && Object.keys(product.specifications).length > 0;
+        <Link to="/shop" className="btn btn-primary">
+          <ArrowLeft size={16} />
+          <span>Back to All Watches</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const hasVariants =
+    Array.isArray(product.variants) &&
+    product.variants.length > 0;
+
+  const selectedVariant = hasVariants
+    ? product.variants.find(
+        (variant) => variant.id === selectedVariantId
+      ) || product.variants[0]
+    : null;
+
+  const selectedAvailable = selectedVariant
+    ? selectedVariant.available
+    : product.available;
+
+  const availabilityLabel = selectedAvailable
+    ? 'Available'
+    : 'Currently unavailable';
+
+  const hasSpecs =
+    product.specifications &&
+    Object.keys(product.specifications).length > 0;
+
+  const isDiscounted =
+    hasValidPrice(product.originalPrice) &&
+    hasValidPrice(product.price) &&
+    product.originalPrice > product.price;
 
   return (
     <div className="product-details-page section">
       <div className="container">
-        {/* Editorial Breadcrumbs */}
-        <nav aria-label="Breadcrumb" style={{ marginBottom: '32px' }}>
-          <ol style={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '8px',
-            listStyle: 'none',
-            fontSize: '0.825rem',
-            color: 'var(--color-text-secondary)'
-          }}>
-            <li><Link to="/" style={{ color: 'var(--color-text-secondary)' }}>Home</Link></li>
+
+        {/* Breadcrumbs */}
+        <nav
+          aria-label="Breadcrumb"
+          style={{ marginBottom: '32px' }}
+        >
+          <ol
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+              listStyle: 'none',
+              fontSize: '0.825rem',
+              color: 'var(--color-text-secondary)'
+            }}
+          >
+            <li>
+              <Link
+                to="/"
+                style={{
+                  color: 'var(--color-text-secondary)'
+                }}
+              >
+                Home
+              </Link>
+            </li>
+
             <li><ChevronRight size={13} /></li>
-            <li><Link to="/shop" style={{ color: 'var(--color-text-secondary)' }}>Watches</Link></li>
+
+            <li>
+              <Link
+                to="/shop"
+                style={{
+                  color: 'var(--color-text-secondary)'
+                }}
+              >
+                Watches
+              </Link>
+            </li>
+
             {product.category && (
               <>
                 <li><ChevronRight size={13} /></li>
+
                 <li>
-                  <Link to={`/shop?category=${encodeURIComponent(product.category)}`} style={{ color: 'var(--color-text-secondary)' }}>
+                  <Link
+                    to={`/shop?category=${encodeURIComponent(
+                      product.category
+                    )}`}
+                    style={{
+                      color: 'var(--color-text-secondary)'
+                    }}
+                  >
                     {product.category}
                   </Link>
                 </li>
               </>
             )}
+
             <li><ChevronRight size={13} /></li>
-            <li aria-current="page" style={{ color: 'var(--color-charcoal)', fontWeight: 600 }}>
+
+            <li
+              aria-current="page"
+              style={{
+                color: 'var(--color-charcoal)',
+                fontWeight: 600
+              }}
+            >
               {product.name}
             </li>
           </ol>
         </nav>
 
-        {/* Product Details 2-Column Grid */}
         <div className="product-details-grid">
-          {/* Left Column: Product Visual Gallery */}
+
+          {/* Product Gallery */}
           <div>
             <ProductGallery
               mainImage={product.mainImage}
               additionalImages={product.additionalImages}
-              variantImage={selectedVariant ? selectedVariant.image : null}
+              variantImage={
+                selectedVariant?.image || null
+              }
               productName={product.name}
             />
           </div>
 
-          {/* Right Column: Information, Pricing, Swatches, CTA */}
+          {/* Product Information */}
           <div className="product-info-panel">
+
             {product.brand && (
-              <span className="product-header-brand">{product.brand}</span>
+              <span className="product-header-brand">
+                {product.brand}
+              </span>
             )}
 
-            <h1 className="product-header-title">{product.name}</h1>
+            <h1 className="product-header-title">
+              {product.name}
+            </h1>
 
-            {/* Meta Row: Model reference & availability */}
             <div className="product-meta-row">
+
               {product.model && (
-                <span className="product-id-badge">Model: {product.model}</span>
-              )}
-              {product.id && (
-                <span className="product-id-badge">Ref: {product.id}</span>
-              )}
-              {product.availability && (
-                <span className="product-availability-tag">
-                  <ShieldCheck size={14} />
-                  {product.availability}
+                <span className="product-id-badge">
+                  Model: {product.model}
                 </span>
               )}
+
+              {product.id && (
+                <span className="product-id-badge">
+                  Ref: {product.id}
+                </span>
+              )}
+
+              <span
+                className="product-availability-tag"
+                role="status"
+                aria-live="polite"
+              >
+                <ShieldCheck size={14} />
+                {availabilityLabel}
+              </span>
             </div>
 
-            {/* Price Presentation */}
+            {/* Pricing */}
             <div className="product-price-section">
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '12px'
+                }}
+              >
                 <span className="product-main-price">
                   {formatCurrency(product.price)}
                 </span>
+
                 {isDiscounted && (
-                  <span style={{ fontSize: '1.15rem', color: 'var(--color-text-muted)', textDecoration: 'line-through' }}>
-                    {formatCurrency(product.originalPrice, { fallbackOnNull: false })}
+                  <span
+                    style={{
+                      fontSize: '1.15rem',
+                      color: 'var(--color-text-muted)',
+                      textDecoration: 'line-through'
+                    }}
+                  >
+                    {formatCurrency(
+                      product.originalPrice,
+                      { fallbackOnNull: false }
+                    )}
                   </span>
                 )}
               </div>
+
               <p className="product-price-notice">
                 {hasValidPrice(product.price)
-                  ? 'Inclusive of applicable taxes. Order or enquire directly on WhatsApp.'
-                  : 'Contact us on WhatsApp for pricing and reserve availability.'}
+                  ? 'Inclusive of applicable taxes. Enquire directly on WhatsApp.'
+                  : 'Contact us on WhatsApp for pricing and availability.'}
               </p>
             </div>
 
-            {/* Product Narrative / Description */}
+            {/* Description */}
             {product.description && (
-              <div style={{ marginBottom: '28px', fontSize: '1rem', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+              <div
+                style={{
+                  marginBottom: '28px',
+                  fontSize: '1rem',
+                  color: 'var(--color-text-secondary)',
+                  lineHeight: 1.7
+                }}
+              >
                 {product.description}
               </div>
             )}
 
-            {/* Colour Variant Selector */}
+            {/* Colour Selection */}
             {hasVariants && (
               <ColorVariantSelector
                 variants={product.variants}
                 selectedVariant={selectedVariant}
-                onSelectVariant={(v) => setSelectedVariant(v)}
+                onSelectVariant={(variant) =>
+                  setSelectedVariantId(variant.id)
+                }
               />
             )}
 
-            {/* Primary Order / Enquiry CTA */}
+            {/* WhatsApp Enquiry */}
             <div className="product-cta-container">
               <WhatsAppButton
                 product={product}
@@ -165,22 +492,34 @@ export function ProductDetails() {
                 className="product-cta-button"
               />
 
-              {/* Informative Explanation of WhatsApp Enquiry Model */}
               <div className="whatsapp-flow-explanation">
-                <strong>How WhatsApp enquiry works:</strong> Tapping above opens WhatsApp with your chosen timepiece and colour variant prefilled. You review and send the message yourself. Our team answers your questions directly.
+                <strong>
+                  How WhatsApp enquiry works:
+                </strong>{' '}
+                Tapping above opens WhatsApp with your
+                chosen timepiece and colour variant
+                prefilled. You review and send the message
+                yourself. Our team answers your questions
+                directly.
               </div>
             </div>
 
-            {/* Confirmed Technical Specifications */}
+            {/* Specifications */}
             {hasSpecs && (
               <div className="product-specs-box">
                 <h4>Confirmed Specifications</h4>
-                <table className="specs-table" aria-label="Technical Specifications">
+
+                <table
+                  className="specs-table"
+                  aria-label="Technical Specifications"
+                >
                   <tbody>
-                    {Object.entries(product.specifications).map(([key, val]) => (
+                    {Object.entries(
+                      product.specifications
+                    ).map(([key, value]) => (
                       <tr key={key}>
                         <th scope="row">{key}</th>
-                        <td>{val}</td>
+                        <td>{value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -188,7 +527,7 @@ export function ProductDetails() {
               </div>
             )}
 
-            {/* Return Link */}
+            {/* Back Link */}
             <div style={{ marginTop: '32px' }}>
               <Link
                 to="/shop"
@@ -208,12 +547,28 @@ export function ProductDetails() {
           </div>
         </div>
 
-        {/* Related Watches Section */}
+        {/* Related Watches */}
         {relatedWatches.length > 0 && (
-          <div style={{ marginTop: '80px', paddingTop: '64px', borderTop: '1px solid var(--color-border)' }}>
-            <div className="section-header" style={{ marginBottom: '36px' }}>
-              <span className="section-subtitle">COMPLEMENTARY PIECES</span>
-              <h2 className="section-title">You May Also Admire</h2>
+          <div
+            style={{
+              marginTop: '80px',
+              paddingTop: '64px',
+              borderTop:
+                '1px solid var(--color-border)'
+            }}
+          >
+            <div
+              className="section-header"
+              style={{ marginBottom: '36px' }}
+            >
+              <span className="section-subtitle">
+                COMPLEMENTARY PIECES
+              </span>
+
+              <h2 className="section-title">
+                You May Also Admire
+              </h2>
+
               <div className="gold-divider" />
             </div>
 

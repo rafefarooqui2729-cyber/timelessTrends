@@ -1,0 +1,714 @@
+[
+  {
+    "line": 30,
+    "text": "function getSetting(db, key, fallback = null) {"
+  },
+  {
+    "line": 31,
+    "text": "const r = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);"
+  },
+  {
+    "line": 85,
+    "text": "function getActiveOffers(db) {"
+  },
+  {
+    "line": 87,
+    "text": "return db.prepare(`"
+  },
+  {
+    "line": 148,
+    "text": "function createApp(db, opts = {}) {"
+  },
+  {
+    "line": 181,
+    "text": "const waNumber = () => (getSetting(db, 'whatsapp_number', '') || config.whatsappNumber || '').replace(/\\D/g, '');"
+  },
+  {
+    "line": 184,
+    "text": "businessName: getSetting(db, 'business_name', 'TIMELESS TRENDS'),"
+  },
+  {
+    "line": 194,
+    "text": "const products = db.prepare(`"
+  },
+  {
+    "line": 202,
+    "text": "const activeOffers = getActiveOffers(db);"
+  },
+  {
+    "line": 205,
+    "text": "const variants = db.prepare('SELECT id, sku, colour, price_override, stock_on_hand - reserved AS avail FROM variants WHERE product_id=? AND is_active=1 ORDER BY id').all(p.id)"
+  },
+  {
+    "line": 207,
+    "text": "const images = db.prepare('SELECT id, variant_id, web_path, alt FROM images WHERE product_id=? ORDER BY sort_order, id').all(p.id)"
+  },
+  {
+    "line": 253,
+    "text": "const categories = db.prepare('SELECT * FROM categories WHERE is_active=1 ORDER BY display_order ASC, id ASC').all();"
+  },
+  {
+    "line": 263,
+    "text": "res.json(getActiveOffers(db));"
+  },
+  {
+    "line": 285,
+    "text": "const p = db.prepare(\"SELECT id FROM products WHERE id=? AND status='published' AND is_active=1\").get(b.productId);"
+  },
+  {
+    "line": 290,
+    "text": "db.prepare('INSERT INTO enquiries (ref, product_id, variant_id, status, source, customer_name, customer_contact, notes, created_at, created_on) VALUES (?,?,?,?,?,?,?,?,?,?)')"
+  },
+  {
+    "line": 309,
+    "text": "const u = db.prepare('SELECT * FROM users WHERE email = ?').get(b.email.toLowerCase());"
+  },
+  {
+    "line": 313,
+    "text": "audit(db, null, 'auth.login_failed', 'user', b.email);"
+  },
+  {
+    "line": 317,
+    "text": "audit(db, u.id, 'auth.login_deactivated', 'user', u.id);"
+  },
+  {
+    "line": 322,
+    "text": "db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?,?,?,?)')"
+  },
+  {
+    "line": 326,
+    "text": "audit(db, u.id, 'auth.login', 'user', u.id);"
+  },
+  {
+    "line": 332,
+    "text": "db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha(req.cookies.tt_session));"
+  },
+  {
+    "line": 344,
+    "text": "const row = t && db.prepare(`"
+  },
+  {
+    "line": 366,
+    "text": "const row = t && db.prepare(`"
+  },
+  {
+    "line": 381,
+    "text": "const totalProducts = db.prepare('SELECT COUNT(*) AS count FROM products WHERE is_active=1').get().count;"
+  },
+  {
+    "line": 382,
+    "text": "const publishedProducts = db.prepare(\"SELECT COUNT(*) AS count FROM products WHERE status='published' AND is_active=1\").get().count;"
+  },
+  {
+    "line": 383,
+    "text": "const draftProducts = db.prepare(\"SELECT COUNT(*) AS count FROM products WHERE status='draft' AND is_active=1\").get().count;"
+  },
+  {
+    "line": 384,
+    "text": "const archivedProducts = db.prepare(\"SELECT COUNT(*) AS count FROM products WHERE status='archived'\").get().count;"
+  },
+  {
+    "line": 386,
+    "text": "const inventoryAgg = db.prepare(`"
+  },
+  {
+    "line": 396,
+    "text": "const newArrivals = db.prepare('SELECT COUNT(*) AS count FROM products WHERE is_new_arrival=1 AND is_active=1').get().count;"
+  },
+  {
+    "line": 397,
+    "text": "const featured = db.prepare('SELECT COUNT(*) AS count FROM products WHERE is_featured=1 AND is_active=1').get().count;"
+  },
+  {
+    "line": 398,
+    "text": "const activeOffers = db.prepare('SELECT COUNT(*) AS count FROM offers WHERE is_active=1').get().count;"
+  },
+  {
+    "line": 399,
+    "text": "const enquiries = db.prepare('SELECT COUNT(*) AS count FROM enquiries').get().count;"
+  },
+  {
+    "line": 402,
+    "text": "const lowStockAlerts = db.prepare(`"
+  },
+  {
+    "line": 410,
+    "text": "const outOfStockAlerts = db.prepare(`"
+  },
+  {
+    "line": 418,
+    "text": "const recentMovements = db.prepare(`"
+  },
+  {
+    "line": 439,
+    "text": "const users = db.prepare('SELECT id, email, name, role, is_active, created_at FROM users ORDER BY id ASC').all()"
+  },
+  {
+    "line": 452,
+    "text": "const existing = db.prepare('SELECT id FROM users WHERE email=?').get(b.email.toLowerCase());"
+  },
+  {
+    "line": 455,
+    "text": "const id = db.prepare(`"
+  },
+  {
+    "line": 460,
+    "text": "audit(db, req.user.id, 'admin.create', 'user', id, { email: b.email, role: b.role });"
+  },
+  {
+    "line": 466,
+    "text": "const target = db.prepare('SELECT * FROM users WHERE id=?').get(targetId);"
+  },
+  {
+    "line": 498,
+    "text": "db.prepare(`UPDATE users SET ${keys.map(k => `${k}=?`).join(', ')} WHERE id=?`)"
+  },
+  {
+    "line": 500,
+    "text": "audit(db, req.user.id, 'admin.update', 'user', targetId, updates);"
+  },
+  {
+    "line": 503,
+    "text": "const updated = db.prepare('SELECT id, email, name, role, is_active, created_at FROM users WHERE id=?').get(targetId);"
+  },
+  {
+    "line": 509,
+    "text": "const target = db.prepare('SELECT * FROM users WHERE id=?').get(targetId);"
+  },
+  {
+    "line": 516,
+    "text": "db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(bcrypt.hashSync(b.password, 12), targetId);"
+  },
+  {
+    "line": 518,
+    "text": "db.prepare('DELETE FROM sessions WHERE user_id=?').run(targetId);"
+  },
+  {
+    "line": 520,
+    "text": "audit(db, req.user.id, 'admin.password_reset', 'user', targetId);"
+  },
+  {
+    "line": 526,
+    "text": "res.json(db.prepare('SELECT * FROM categories ORDER BY display_order ASC, id ASC').all());"
+  },
+  {
+    "line": 540,
+    "text": "const existing = db.prepare('SELECT id FROM categories WHERE slug=?').get(s);"
+  },
+  {
+    "line": 543,
+    "text": "const id = db.prepare(`"
+  },
+  {
+    "line": 548,
+    "text": "audit(db, req.user.id, 'category.create', 'category', id, b);"
+  },
+  {
+    "line": 549,
+    "text": "res.status(201).json(db.prepare('SELECT * FROM categories WHERE id=?').get(id));"
+  },
+  {
+    "line": 554,
+    "text": "const cur = db.prepare('SELECT * FROM categories WHERE id=?').get(id);"
+  },
+  {
+    "line": 572,
+    "text": "db.prepare(`UPDATE categories SET ${keys.map(k => `${k}=?`).join(', ')} WHERE id=?`)"
+  },
+  {
+    "line": 574,
+    "text": "audit(db, req.user.id, 'category.update', 'category', id, b);"
+  },
+  {
+    "line": 576,
+    "text": "res.json(db.prepare('SELECT * FROM categories WHERE id=?').get(id));"
+  },
+  {
+    "line": 581,
+    "text": "const cur = db.prepare('SELECT * FROM categories WHERE id=?').get(id);"
+  },
+  {
+    "line": 585,
+    "text": "const count = db.prepare('SELECT COUNT(*) AS count FROM products WHERE category = ?').get(cur.slug).count;"
+  },
+  {
+    "line": 590,
+    "text": "db.prepare('DELETE FROM categories WHERE id=?').run(id);"
+  },
+  {
+    "line": 591,
+    "text": "audit(db, req.user.id, 'category.delete', 'category', id, { slug: cur.slug });"
+  },
+  {
+    "line": 603,
+    "text": "const rows = db.prepare("
+  },
+  {
+    "line": 642,
+    "text": "const id = db.prepare(`"
+  },
+  {
+    "line": 651,
+    "text": "audit(db, req.user.id, 'offer.create', 'offer', id, b);"
+  },
+  {
+    "line": 652,
+    "text": "res.status(201).json(db.prepare('SELECT * FROM offers WHERE id=?').get(id));"
+  },
+  {
+    "line": 657,
+    "text": "const cur = db.prepare('SELECT * FROM offers WHERE id=?').get(id);"
+  },
+  {
+    "line": 679,
+    "text": "db.prepare(`UPDATE offers SET ${keys.map(k => `${k}=?`).join(', ')} WHERE id=?`)"
+  },
+  {
+    "line": 681,
+    "text": "audit(db, req.user.id, 'offer.update', 'offer', id, b);"
+  },
+  {
+    "line": 683,
+    "text": "res.json(db.prepare('SELECT * FROM offers WHERE id=?').get(id));"
+  },
+  {
+    "line": 688,
+    "text": "const cur = db.prepare('SELECT * FROM offers WHERE id=?').get(id);"
+  },
+  {
+    "line": 690,
+    "text": "db.prepare('DELETE FROM offers WHERE id=?').run(id);"
+  },
+  {
+    "line": 691,
+    "text": "audit(db, req.user.id, 'offer.delete', 'offer', id, { title: cur.title });"
+  },
+  {
+    "line": 697,
+    "text": "const images = db.prepare(`"
+  },
+  {
+    "line": 711,
+    "text": "SETTING_KEYS.forEach((k) => { out[k] = getSetting(db, k); });"
+  },
+  {
+    "line": 728,
+    "text": "const up = db.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value');"
+  },
+  {
+    "line": 732,
+    "text": "audit(db, req.user.id, 'settings.update', 'settings', '', b);"
+  },
+  {
+    "line": 769,
+    "text": "while (db.prepare('SELECT 1 FROM products WHERE slug = ? AND id != ?').get(s, selfId ?? -1)) s = `${base}-${i++}`;"
+  },
+  {
+    "line": 774,
+    "text": "const n = db.prepare('SELECT COUNT(*) AS n FROM variants WHERE product_id = ?').get(productId).n + 1;"
+  },
+  {
+    "line": 776,
+    "text": "const vid = db.prepare(`"
+  },
+  {
+    "line": 791,
+    "text": "db.prepare(`"
+  },
+  {
+    "line": 805,
+    "text": "const p = db.prepare("
+  },
+  {
+    "line": 823,
+    "text": "const variants = db.prepare("
+  },
+  {
+    "line": 853,
+    "text": "const images = db.prepare("
+  },
+  {
+    "line": 874,
+    "text": "let rows = db.prepare('SELECT id FROM products ORDER BY display_priority DESC, id DESC').all()"
+  },
+  {
+    "line": 898,
+    "text": "const id = db.transaction(() => {"
+  },
+  {
+    "line": 900,
+    "text": "const pid = db.prepare(`"
+  },
+  {
+    "line": 914,
+    "text": "db.prepare('UPDATE products SET code = ? WHERE id = ?').run(code, pid);"
+  },
+  {
+    "line": 916,
+    "text": "audit(db, req.user.id, 'product.create', 'product', pid, { name: b.name });"
+  },
+  {
+    "line": 924,
+    "text": "const cur = db.prepare('SELECT * FROM products WHERE id=?').get(id);"
+  },
+  {
+    "line": 935,
+    "text": "db.prepare(`UPDATE products SET ${keys.map((k) => `${k} = ?`).join(', ')}, updated_at = ? WHERE id = ?`)"
+  },
+  {
+    "line": 937,
+    "text": "audit(db, req.user.id, 'product.update', 'product', id, b);"
+  },
+  {
+    "line": 944,
+    "text": "const p = db.prepare('SELECT id FROM products WHERE id=?').get(id);"
+  },
+  {
+    "line": 946,
+    "text": "db.prepare(\"UPDATE products SET status='archived', updated_at=? WHERE id=?\").run(new Date().toISOString(), id);"
+  },
+  {
+    "line": 947,
+    "text": "audit(db, req.user.id, 'product.archive', 'product', id);"
+  },
+  {
+    "line": 953,
+    "text": "const p = db.prepare('SELECT id FROM products WHERE id=?').get(id);"
+  },
+  {
+    "line": 955,
+    "text": "db.prepare(\"UPDATE products SET status='published', updated_at= ? WHERE id=?\").run(new Date().toISOString(), id);"
+  },
+  {
+    "line": 956,
+    "text": "audit(db, req.user.id, 'product.restore', 'product', id);"
+  },
+  {
+    "line": 962,
+    "text": "const cur = db.prepare('SELECT * FROM products WHERE id=?').get(sourceId);"
+  },
+  {
+    "line": 965,
+    "text": "const newId = db.transaction(() => {"
+  },
+  {
+    "line": 970,
+    "text": "const pid = db.prepare(`"
+  },
+  {
+    "line": 981,
+    "text": "db.prepare('UPDATE products SET code = ? WHERE id = ?').run(code, pid);"
+  },
+  {
+    "line": 983,
+    "text": "const variants = db.prepare('SELECT * FROM variants WHERE product_id=?').all(sourceId);"
+  },
+  {
+    "line": 994,
+    "text": "audit(db, req.user.id, 'product.duplicate', 'product', pid, { sourceId });"
+  },
+  {
+    "line": 1008,
+    "text": "db.transaction(() => {"
+  },
+  {
+    "line": 1011,
+    "text": "b.productIds.forEach(id => db.prepare('UPDATE products SET is_active=1, updated_at=? WHERE id=?').run(now, id));"
+  },
+  {
+    "line": 1013,
+    "text": "b.productIds.forEach(id => db.prepare('UPDATE products SET is_active=0, updated_at=? WHERE id=?').run(now, id));"
+  },
+  {
+    "line": 1015,
+    "text": "b.productIds.forEach(id => db.prepare(\"UPDATE products SET status='archived', updated_at=? WHERE id=?\").run(now, id));"
+  },
+  {
+    "line": 1017,
+    "text": "b.productIds.forEach(id => db.prepare(\"UPDATE products SET status='published', updated_at=? WHERE id=?\").run(now, id));"
+  },
+  {
+    "line": 1019,
+    "text": "b.productIds.forEach(id => db.prepare('UPDATE products SET category=?, updated_at=? WHERE id=?').run(b.category, now, id));"
+  },
+  {
+    "line": 1021,
+    "text": "audit(db, req.user.id, 'product.bulk_action', 'products', b.productIds.join(','), b);"
+  },
+  {
+    "line": 1029,
+    "text": "const p = db.prepare('SELECT code FROM products WHERE id=?').get(id);"
+  },
+  {
+    "line": 1032,
+    "text": "audit(db, req.user.id, 'variant.create', 'variant', vid);"
+  },
+  {
+    "line": 1039,
+    "text": "const v = inv.getVariant(db, id);"
+  },
+  {
+    "line": 1068,
+    "text": "db.prepare("
+  },
+  {
+    "line": 1072,
+    "text": "audit(db, req.user.id, 'variant.update', 'variant', id, b);"
+  },
+  {
+    "line": 1080,
+    "text": "const v = inv.getVariant(db, Number(req.params.id));"
+  },
+  {
+    "line": 1081,
+    "text": "if (db.prepare('SELECT 1 FROM stock_movements WHERE variant_id=?').get(v.id) || db.prepare('SELECT 1 FROM order_items WHERE variant_id=?').get(v.id)) {"
+  },
+  {
+    "line": 1084,
+    "text": "db.prepare('DELETE FROM variants WHERE id=?').run(v.id);"
+  },
+  {
+    "line": 1085,
+    "text": "audit(db, req.user.id, 'variant.delete', 'variant', v.id);"
+  },
+  {
+    "line": 1115,
+    "text": "!db.prepare("
+  },
+  {
+    "line": 1167,
+    "text": "const insertImage = db.prepare(`"
+  },
+  {
+    "line": 1175,
+    "text": "const saveImages = db.transaction(() => {"
+  },
+  {
+    "line": 1191,
+    "text": "audit(db, req.user.id, 'image.upload', 'product', pid, {"
+  },
+  {
+    "line": 1220,
+    "text": "const img = db.prepare('SELECT * FROM images WHERE id=?').get(Number(req.params.id));"
+  },
+  {
+    "line": 1222,
+    "text": "db.prepare('DELETE FROM images WHERE id=?').run(img.id);"
+  },
+  {
+    "line": 1224,
+    "text": "audit(db, req.user.id, 'image.delete', 'product', img.product_id, { imageId: img.id });"
+  },
+  {
+    "line": 1231,
+    "text": "const rows = db.prepare(`"
+  },
+  {
+    "line": 1252,
+    "text": "res.json({ rows, valuation: canSeeCost ? rep.inventoryValue(db) : undefined });"
+  },
+  {
+    "line": 1266,
+    "text": "res.status(201).json({ purchaseId: inv.receiveStock(db, { ...b, userId: req.user.id }) });"
+  },
+  {
+    "line": 1275,
+    "text": "res.json(inv.adjustStock(db, { ...b, userId: req.user.id }));"
+  },
+  {
+    "line": 1285,
+    "text": "inv.removeStock(db, { ...b, userId: req.user.id });"
+  },
+  {
+    "line": 1297,
+    "text": "res.json(inv.reconcile(db, { counts: b.counts, userId: req.user.id }));"
+  },
+  {
+    "line": 1309,
+    "text": "res.json(db.prepare(`"
+  },
+  {
+    "line": 1322,
+    "text": "res.json(rep.stockSummary(db, d, d));"
+  },
+  {
+    "line": 1326,
+    "text": "admin.get('/suppliers', (req, res) => res.json(db.prepare('SELECT * FROM suppliers ORDER BY name').all()));"
+  },
+  {
+    "line": 1329,
+    "text": "const id = db.prepare('INSERT INTO suppliers (name, phone, notes, created_at) VALUES (?,?,?,?)')"
+  },
+  {
+    "line": 1331,
+    "text": "audit(db, req.user.id, 'supplier.create', 'supplier', id);"
+  },
+  {
+    "line": 1337,
+    "text": "res.json(db.prepare(`"
+  },
+  {
+    "line": 1359,
+    "text": "const id = db.prepare(`"
+  },
+  {
+    "line": 1364,
+    "text": "audit(db, req.user.id, 'enquiry.create', 'enquiry', id);"
+  },
+  {
+    "line": 1377,
+    "text": "const cur = db.prepare('SELECT * FROM enquiries WHERE id=?').get(id);"
+  },
+  {
+    "line": 1380,
+    "text": "db.prepare(`"
+  },
+  {
+    "line": 1395,
+    "text": "audit(db, req.user.id, 'enquiry.update', 'enquiry', id, b);"
+  },
+  {
+    "line": 1407,
+    "text": "res.json(db.prepare(`SELECT id FROM orders ${w.length ? 'WHERE ' + w.join(' AND ') : ''} ORDER BY id DESC LIMIT 500`)"
+  },
+  {
+    "line": 1408,
+    "text": ".all(...p).map((r) => ord.getOrder(db, r.id)));"
+  },
+  {
+    "line": 1412,
+    "text": "const o = ord.getOrder(db, Number(req.params.id));"
+  },
+  {
+    "line": 1433,
+    "text": "const id = ord.createOrder(db, { ...b, userId: req.user.id });"
+  },
+  {
+    "line": 1434,
+    "text": "res.status(201).json(ord.getOrder(db, id));"
+  },
+  {
+    "line": 1445,
+    "text": "const cur = db.prepare('SELECT * FROM orders WHERE id=?').get(id);"
+  },
+  {
+    "line": 1448,
+    "text": "db.prepare('UPDATE orders SET customer_name=?, customer_contact=?, notes=?, updated_at=? WHERE id=?')"
+  },
+  {
+    "line": 1450,
+    "text": "audit(db, req.user.id, 'order.update', 'order', id);"
+  },
+  {
+    "line": 1451,
+    "text": "res.json(ord.getOrder(db, id));"
+  },
+  {
+    "line": 1460,
+    "text": "ord.setOrderStatus(db, Number(req.params.id), b.status, { userId: req.user.id, cancelReason: b.cancelReason, date: b.date });"
+  },
+  {
+    "line": 1461,
+    "text": "res.json(ord.getOrder(db, Number(req.params.id)));"
+  },
+  {
+    "line": 1472,
+    "text": "ord.addPayment(db, Number(req.params.id), { ...b, userId: req.user.id });"
+  },
+  {
+    "line": 1473,
+    "text": "res.status(201).json(ord.getOrder(db, Number(req.params.id)));"
+  },
+  {
+    "line": 1483,
+    "text": "const it = db.prepare('SELECT order_id FROM order_items WHERE id=? AND order_id=?').get(Number(req.params.itemId), Number(req.params.id));"
+  },
+  {
+    "line": 1485,
+    "text": "inv.returnItem(db, { orderItemId: Number(req.params.itemId), ...b, reason: b.reason ?? undefined, userId: req.user.id });"
+  },
+  {
+    "line": 1486,
+    "text": "res.json(ord.getOrder(db, Number(req.params.id)));"
+  },
+  {
+    "line": 1496,
+    "text": "res.json(db.prepare(`SELECT * FROM expenses ${w.length ? 'WHERE ' + w.join(' AND ') : ''} ORDER BY expense_on DESC, id DESC LIMIT 1000`).all(...p));"
+  },
+  {
+    "line": 1509,
+    "text": "const id = db.prepare('INSERT INTO expenses (expense_on, category, amount, description, payment_method, supplier_id, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)')"
+  },
+  {
+    "line": 1511,
+    "text": "audit(db, req.user.id, 'expense.create', 'expense', id, b);"
+  },
+  {
+    "line": 1516,
+    "text": "const e = db.prepare('SELECT * FROM expenses WHERE id=?').get(Number(req.params.id));"
+  },
+  {
+    "line": 1518,
+    "text": "db.prepare('DELETE FROM expenses WHERE id=?').run(e.id);"
+  },
+  {
+    "line": 1519,
+    "text": "audit(db, req.user.id, 'expense.delete', 'expense', e.id, e);"
+  },
+  {
+    "line": 1524,
+    "text": "res.json({ entries: db.prepare('SELECT * FROM savings_entries ORDER BY entry_on DESC, id DESC LIMIT 500').all(), balance: rep.savingsBalance(db, '9999-12-31') });"
+  },
+  {
+    "line": 1529,
+    "text": "const id = db.prepare('INSERT INTO savings_entries (entry_on, direction, amount, note, created_at) VALUES (?,?,?,?,?)')"
+  },
+  {
+    "line": 1531,
+    "text": "audit(db, req.user.id, 'savings.create', 'savings', id, b);"
+  },
+  {
+    "line": 1539,
+    "text": "const m = rep.monthly(db, month);"
+  },
+  {
+    "line": 1540,
+    "text": "res.json({ today: rep.daily(db, today), month: { ...m, stock_by_variant: undefined } });"
+  },
+  {
+    "line": 1543,
+    "text": "admin.get('/reports/daily', requireRole(['super_admin']), (req, res) => res.json(rep.daily(db, req.query.date || localDate())));"
+  },
+  {
+    "line": 1544,
+    "text": "admin.get('/reports/monthly', requireRole(['super_admin']), (req, res) => res.json(rep.monthly(db, req.query.month || localDate().slice(0, 7))));"
+  },
+  {
+    "line": 1549,
+    "text": "res.json({ financials: rep.financials(db, from, to), stock: rep.stockSummary(db, from, to), inventory_now: rep.inventoryValue(db) });"
+  },
+  {
+    "line": 1561,
+    "text": "res.json(db.prepare(`"
+  },
+  {
+    "line": 1574,
+    "text": "const rows = db.prepare(`"
+  },
+  {
+    "line": 1583,
+    "text": "'stock-movements': () => db.prepare(`"
+  },
+  {
+    "line": 1589,
+    "text": "orders: () => db.prepare(`"
+  },
+  {
+    "line": 1596,
+    "text": "expenses: () => db.prepare('SELECT id, expense_on, category, amount, description, payment_method FROM expenses ORDER BY expense_on, id').all()"
+  },
+  {
+    "line": 1605,
+    "text": "audit(db, req.user.id, 'export', 'csv', req.params.what);"
+  }
+]

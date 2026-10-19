@@ -1,6 +1,7 @@
+
 /**
  * TIMELESS TRENDS - Central Site Configuration
- * 
+ *
  * Update this file to configure the business details, WhatsApp number,
  * currency, and public domain for the catalogue website.
  */
@@ -10,7 +11,7 @@ export const siteConfig = {
   brandName: 'TIMELESS TRENDS',
   tagline: 'Where every second speaks style, class & confidence.',
   closingStatement: "Don't just tell the time — make a statement.",
-  
+
   brandMessage: [
     'Premium & Trending Watches',
     'Elegant Designs',
@@ -21,27 +22,28 @@ export const siteConfig = {
   ],
 
   // WhatsApp Order & Enquiry Configuration
-  // IMPORTANT: Set your official WhatsApp number here (international format without + or spaces)
-  // Example for India (+91 98765 43210): '919876543210'
-  // Leave as empty string '' if not yet configured — the site will show a helpful setup modal instead of failing.
-  whatsappNumber: '',
+  // International format without + or spaces.
+  // Business WhatsApp: +91 8014445111
+  whatsappNumber: '918014445111',
 
   // Currency Configuration
   currency: 'INR',
   currencySymbol: '₹',
   currencyLocale: 'en-IN',
 
-  // Public Domain (Set only when deployed to production, e.g., 'https://timelesstrends.com')
-  // MUST remain empty in local development to avoid sending localhost URLs to customers.
+  // Public Domain
+  // Set this only after deploying your website.
+  // Example: 'https://yourdomain.com'
   publicUrl: '',
 
-  // Default contact info (only verified channels)
+  // Default contact info
   contact: {
-    enquiryNotice: 'WhatsApp is our primary enquiry channel. Tap any product to start a direct chat with our team.',
+    enquiryNotice:
+      'WhatsApp is our primary enquiry channel. Tap any product to start a direct chat with our team.',
     operatingHours: 'Mon – Sat: 10:00 AM – 8:00 PM IST',
   },
 
-  // Catalogue Category Definitions (only categories that match actual products)
+  // Catalogue Category Definitions
   categories: [
     {
       id: 'all',

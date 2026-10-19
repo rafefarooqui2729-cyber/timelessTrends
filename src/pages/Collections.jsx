@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Compass } from 'lucide-react';
-import { getCategoriesWithCounts } from '../utils/products';
+import { siteConfig } from '../config/siteConfig';
+import { matchesCategory } from '../utils/products';
+import { fetchPublicProducts } from '../utils/publicProductsApi';
 
 export function Collections() {
-  const collections = getCategoriesWithCounts().filter(c => c.id !== 'all');
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicProducts()
+      .then((all) => {
+        if (!cancelled) setProducts(all);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const configs = (siteConfig.categories || []).filter((c) => c.id !== 'all');
+  const collections = configs.map((col) => ({
+    ...col,
+    count: products.filter((p) => matchesCategory(p, col.id)).length,
+  }));
 
   return (
     <div className="collections-page section">
