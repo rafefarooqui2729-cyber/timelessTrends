@@ -43,8 +43,8 @@ export function Collections() {
         {/* Collections Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '32px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+          gap: 'clamp(20px, 3vw, 32px)'
         }}>
           {collections.map((col) => {
             const bannerImage = `/images/collections/${col.id}.svg`;

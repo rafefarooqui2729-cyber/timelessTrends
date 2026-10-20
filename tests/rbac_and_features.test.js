@@ -162,7 +162,23 @@ test('Offers & Discounts: Promotional rules apply correctly on public endpoints'
   assert.equal(rOffer.status, 201);
 
   // Public endpoint applies effective discounted price (10000 - 20% = 8000)
-  const rPub = await call('GET', `/api/public/products/${slug}`);
+  // Explicitly assign the promotional offer to the product.
+const rAssign = await call(
+  'PUT',
+  `/api/admin/products/${prodId}`,
+  {
+    offer_id: rOffer.body.id
+  },
+  {
+    cookie: superAdminCookie
+  }
+);
+
+assert.equal(rAssign.status, 200);
+
+// Verify the public storefront displays the discounted price.
+const rPub = await call('GET', `/api/public/products/${slug}`);
+
   assert.equal(rPub.status, 200);
   assert.equal(rPub.body.effective_price, 8000);
   assert.equal(rPub.body.active_offer.badge_text, '20% OFF');

@@ -1,4 +1,4 @@
-# Logs
+﻿# Logs
 logs
 *.log
 npm-debug.log*
@@ -27,3 +27,14 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Timeless Trends private data and local-only files
+/data/
+/scratch/
+/migration-backup-2026-10-16/
+/uploads/
+*.db
+*.db-shm
+*.db-wal
+*.backup
+/v2/timeless-trends.zip

@@ -34,8 +34,10 @@ CREATE TABLE IF NOT EXISTS products (
   id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL, brand TEXT, model TEXT,
   slug TEXT NOT NULL UNIQUE, category TEXT, description TEXT,
   selling_price REAL CHECK (selling_price IS NULL OR selling_price >= 0),
-  original_price REAL CHECK (original_price IS NULL OR original_price >= 0),
-  specs TEXT, stock_location TEXT,
+original_price REAL CHECK (original_price IS NULL OR original_price >= 0),
+offer_id INTEGER REFERENCES offers(id) ON DELETE SET NULL,
+specs TEXT,
+stock_location TEXT,
   is_new_arrival INTEGER NOT NULL DEFAULT 0, is_featured INTEGER NOT NULL DEFAULT 0,
   display_priority INTEGER NOT NULL DEFAULT 0,
   new_arrival_start TEXT, new_arrival_end TEXT,
@@ -159,6 +161,12 @@ function migrateDb(db) {
   }
 
   const prodCols = db.prepare("PRAGMA table_info(products)").all().map(c => c.name);
+if (!prodCols.includes('offer_id')) {
+  db.exec(`
+    ALTER TABLE products
+    ADD COLUMN offer_id INTEGER REFERENCES offers(id) ON DELETE SET NULL
+  `);
+}
   if (!prodCols.includes('display_priority')) {
     try { db.exec("ALTER TABLE products ADD COLUMN display_priority INTEGER NOT NULL DEFAULT 0"); } catch {}
   }

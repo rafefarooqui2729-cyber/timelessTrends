@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, MessageCircle } from 'lucide-react';
 import { formatCurrency, hasValidPrice } from '../utils/formatCurrency';
@@ -19,8 +19,9 @@ export function ProductCard({ product }) {
 
   const hasVariants = product.variants && product.variants.length > 0;
   const isDiscounted = product.originalPrice && product.price && product.originalPrice > product.price;
+  const isAvailable = product.available !== false;
 
-  // Variant hover/select preview
+  // Variant click preview
   const handleVariantPreview = (variant, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -32,42 +33,35 @@ export function ProductCard({ product }) {
   };
 
   return (
-    <article className="product-card" aria-label={`Watch: ${product.name}`}>
+    <article className={`product-card ${!isAvailable ? 'is-out-of-stock' : ''}`} aria-label={`Watch: ${product.name}`}>
       {/* Media & Link */}
       <div className="product-card-media">
         {/* Badges */}
         <div className="product-card-badges">
-          {product.isNewArrival && (
-            <span className="badge badge-new">New Arrival</span>
-          )}
-          {product.availability === 'Limited Edition' && (
-            <span className="badge badge-limited">Limited</span>
-          )}
-          {isDiscounted && (
-            <span className="badge badge-gold">Special Offer</span>
+          {!isAvailable ? (
+            <span className="badge badge-out-of-stock">Out of Stock</span>
+          ) : (
+            <>
+              {product.isNewArrival && (
+                <span className="badge badge-new">New Arrival</span>
+              )}
+              {isDiscounted && (
+                <span className="badge badge-gold">Special Offer</span>
+              )}
+            </>
           )}
         </div>
 
-        <Link to={`/product/${product.slug}`} tabIndex={-1} aria-hidden="true" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <Link
+          to={`/product/${product.slug}`}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="product-card-media-link"
+        >
           {!activeImage || imageError ? (
-            <div style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#161616',
-              color: 'var(--color-silver)',
-              padding: '20px',
-              textAlign: 'center'
-            }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--color-gold)' }}>
-                TIMELESS TRENDS
-              </span>
-              <span style={{ fontSize: '0.75rem', marginTop: '6px', color: 'var(--color-silver)' }}>
-                {product.name}
-              </span>
+            <div className="product-card-img-placeholder">
+              <span className="placeholder-brand">TIMELESS TRENDS</span>
+              <span className="placeholder-name">{product.name}</span>
             </div>
           ) : (
             <img
@@ -112,11 +106,9 @@ export function ProductCard({ product }) {
               <button
                 key={v.id}
                 type="button"
-                className="card-swatch-dot"
+                className={`card-swatch-dot ${selectedVariant?.id === v.id ? 'active' : ''}`}
                 style={{
-                  backgroundColor: v.color || '#333',
-                  boxShadow: selectedVariant?.id === v.id ? '0 0 0 2px var(--color-gold)' : 'none',
-                  transform: selectedVariant?.id === v.id ? 'scale(1.15)' : 'scale(1)'
+                  backgroundColor: v.color || '#333'
                 }}
                 onClick={(e) => handleVariantPreview(v, e)}
                 title={v.name}
@@ -144,7 +136,7 @@ export function ProductCard({ product }) {
           <WhatsAppButton
             product={product}
             variant={selectedVariant}
-            label="Enquire"
+            label={isAvailable ? 'Enquire' : 'Restock Info'}
             variantStyle="primary"
             className="product-card-wa-btn"
             ariaLabel={`Enquire about ${product.name} on WhatsApp`}

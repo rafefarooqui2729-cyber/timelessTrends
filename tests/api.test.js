@@ -5,6 +5,7 @@ const os = require('os'); const fs = require('fs'); const path = require('path')
 process.env.UPLOAD_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-'));
 const { openDb } = require('../server/db');
 const { createApp } = require('../server/app');
+const mockStorage = require('./mock-storage');
 const { localDate } = require('../server/util');
 
 let server; let base; let db; let cookie = '';
@@ -20,7 +21,10 @@ const A = (u) => `/api/admin${u}`;
 before(async () => {
   db = openDb(':memory:');
   db.prepare('INSERT INTO users (email,name,password_hash,created_at) VALUES (?,?,?,?)').run('owner@test.com', 'Owner', bcrypt.hashSync('correct-horse-1', 4), new Date().toISOString());
-  server = createApp(db, { noRateLimit: true }).listen(0); base = `http://localhost:${server.address().port}`;
+  server = createApp(db, {
+  noRateLimit: true,
+  storage: mockStorage
+}).listen(0); base = `http://localhost:${server.address().port}`;
 });
 after(() => server.close());
 
@@ -202,32 +206,136 @@ test('variant with history cannot be deleted; logout invalidates session', async
   assert.equal((await call('GET', A('/products'))).status, 401);
 });
 
-test('image upload keeps original separate, serves only optimised copy, rejects non-images', async () => {
+test('image upload optimizes WebP, stores remotely, rejects invalid files, and supports deletion', async () => {
   const sharp = require('sharp');
-  await call('POST', '/api/auth/login', { email: 'owner@test.com', password: 'correct-horse-1' }, { auth: false, raw: true }).then((r) => { cookie = r.headers.get('set-cookie').split(';')[0]; });
-  const png = await sharp({ create: { width: 2400, height: 1800, channels: 3, background: '#888' } }).png().toBuffer();
-  const fd = new FormData(); fd.append('image', new Blob([png], { type: 'image/png' }), 'w.png'); fd.append('variantId', String(black.id));
-  const r = await fetch(base + A(`/products/${P.id}/images`), { method: 'POST', headers: { Cookie: cookie, 'X-Requested-With': 'tt' }, body: fd });
-  assert.equal(r.status, 201); const p = await r.json(); const img = p.images[0];
-  assert.match(img.url, /^\/uploads\/[0-9a-f]+\.webp$/);
-const storedImage = db.prepare(
-  'SELECT original_path FROM images WHERE id = ?'
-).get(img.id);
 
-assert.ok(storedImage, 'uploaded image should be saved in the database');
+  const login = await call(
+    'POST',
+    '/api/auth/login',
+    {
+      email: 'owner@test.com',
+      password: 'correct-horse-1'
+    },
+    { auth: false, raw: true }
+  );
 
-assert.ok(
-  fs.existsSync(
-    path.join(process.env.UPLOAD_DIR, 'originals', storedImage.original_path)
-  ),
-  'original image should exist in the private originals directory'
-);  const served = await fetch(base + img.url); assert.equal(served.status, 200);
-  const meta = await sharp(Buffer.from(await served.arrayBuffer())).metadata(); assert.equal(meta.format, 'webp'); assert.ok(meta.width <= 1600);
-  const traversal = await fetch(base + `/uploads/../originals/${img.original_path}`); assert.ok(!/image/.test(traversal.headers.get('content-type') || ''), 'original must not be served');
-  assert.equal((await fetch(base + `/uploads/${img.original_path}`)).status, 404);
-  const pub = (await call('GET', '/api/public/products/classic-chrono', null, { auth: false })).body;
-  assert.equal(pub.images[0].variantId, black.id);
-  assert.ok(!JSON.stringify(pub).includes('original_path'));
-  const bad = new FormData(); bad.append('image', new Blob(['not an image'], { type: 'image/png' }), 'x.png');
-  assert.equal((await fetch(base + A(`/products/${P.id}/images`), { method: 'POST', headers: { Cookie: cookie, 'X-Requested-With': 'tt' }, body: bad })).status >= 400, true);
+  cookie = login.headers.get('set-cookie').split(';')[0];
+
+  const png = await sharp({
+    create: {
+      width: 2400,
+      height: 1800,
+      channels: 3,
+      background: '#888'
+    }
+  }).png().toBuffer();
+
+  const fd = new FormData();
+
+  fd.append(
+    'image',
+    new Blob([png], { type: 'image/png' }),
+    'watch.png'
+  );
+
+  fd.append('variantId', String(black.id));
+
+  const response = await fetch(
+    base + A(`/products/${P.id}/images`),
+    {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'X-Requested-With': 'tt'
+      },
+      body: fd
+    }
+  );
+
+  assert.equal(response.status, 201);
+
+  const product = await response.json();
+  const image = product.images[0];
+
+  assert.match(
+    image.url,
+    /^http:\/\/mock-storage\.local\/[0-9a-f]+\.webp$/
+  );
+
+  const storedImage = db.prepare(
+    'SELECT web_path, original_path FROM images WHERE id=?'
+  ).get(image.id);
+
+  assert.ok(storedImage);
+
+  // Verify the optimized image exists in mock storage.
+  const optimizedBuffer = mockStorage.getImage(storedImage.web_path);
+
+  assert.ok(optimizedBuffer);
+
+  const metadata = await sharp(optimizedBuffer).metadata();
+
+  assert.equal(metadata.format, 'webp');
+  assert.ok(metadata.width <= 1600);
+  assert.ok(metadata.height <= 1600);
+
+  // Verify public product data includes the image.
+  const publicProduct = (
+    await call(
+      'GET',
+      '/api/public/products/classic-chrono',
+      null,
+      { auth: false }
+    )
+  ).body;
+
+  assert.equal(publicProduct.images[0].variantId, black.id);
+
+  assert.ok(
+    !JSON.stringify(publicProduct).includes('original_path')
+  );
+
+  // Invalid image data must be rejected.
+  const bad = new FormData();
+
+  bad.append(
+    'image',
+    new Blob(['not an image'], { type: 'image/png' }),
+    'invalid.png'
+  );
+
+  const badResponse = await fetch(
+    base + A(`/products/${P.id}/images`),
+    {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'X-Requested-With': 'tt'
+      },
+      body: bad
+    }
+  );
+
+  assert.ok(badResponse.status >= 400);
+
+  // Delete the image.
+  const deleted = await call(
+    'DELETE',
+    A(`/images/${image.id}`)
+  );
+
+  assert.equal(deleted.status, 200);
+
+  // Verify the database reference was removed.
+  const remaining = db.prepare(
+    'SELECT id FROM images WHERE id=?'
+  ).get(image.id);
+
+  assert.equal(remaining, undefined);
+
+  // Verify the stored object was removed.
+  assert.equal(
+    mockStorage.getImage(storedImage.web_path),
+    undefined
+  );
 });

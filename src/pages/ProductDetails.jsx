@@ -412,7 +412,7 @@ export function ProductDetails() {
               )}
 
               <span
-                className="product-availability-tag"
+                className={`product-availability-tag ${!selectedAvailable ? 'unavailable' : ''}`}
                 role="status"
                 aria-live="polite"
               >
@@ -487,7 +487,7 @@ export function ProductDetails() {
               <WhatsAppButton
                 product={product}
                 variant={selectedVariant}
-                label="Order / Enquire on WhatsApp"
+                label={selectedAvailable ? "Order / Enquire on WhatsApp" : "Enquire About Restock on WhatsApp"}
                 variantStyle="primary"
                 className="product-cta-button"
               />

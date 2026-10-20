@@ -1,44 +1,55 @@
 /**
  * TIMELESS TRENDS - Design Tokens & Custom Properties
- * Refined Luxury Editorial Aesthetic
+ * Refined Horological Editorial Luxury Aesthetic
  */
 
 :root {
-  /* Core Brand Color Palette */
-  --color-charcoal: #191919;
-  --color-matte-black: #101010;
-  --color-deep-black: #0B0B0B;
-  --color-ivory: #F7F5F0;
-  --color-ivory-light: #FBF9F5;
+  /* Core Luxury Color Palette */
+  --color-charcoal: #121212;
+  --color-matte-black: #0B0B0B;
+  --color-deep-black: #050505;
+  --color-surface-dark: #161616;
+  --color-surface-elevated: #1E1E1E;
+  
+  --color-ivory: #F8F6F1;
+  --color-ivory-light: #FCFAF7;
   --color-white: #FFFFFF;
-  --color-gold: #B89B62;
-  --color-gold-light: #D4AF37;
-  --color-gold-hover: #9E824C;
-  --color-gold-soft: rgba(184, 155, 98, 0.12);
-  --color-silver: #AEB2B7;
-  --color-silver-light: #E0E2E5;
+  
+  /* Muted Champagne Gold Accents */
+  --color-gold: #C2A676;
+  --color-gold-light: #DFC79E;
+  --color-gold-hover: #AA8F5F;
+  --color-gold-soft: rgba(194, 166, 118, 0.12);
+  --color-gold-border: rgba(194, 166, 118, 0.32);
+  --color-gold-glow: rgba(194, 166, 118, 0.22);
+  
+  /* Silver & Platinum Neutrals */
+  --color-silver: #9EA3AB;
+  --color-silver-light: #E1E3E7;
+  --color-silver-dark: #585D65;
   
   /* Text and Neutral Colors */
-  --color-text-primary: #202020;
-  --color-text-secondary: #6B6B6B;
-  --color-text-muted: #8E8E8E;
-  --color-text-light: #F7F5F0;
-  --color-text-light-secondary: #C8CCD0;
+  --color-text-primary: #181818;
+  --color-text-secondary: #5C6068;
+  --color-text-muted: #8C9199;
+  --color-text-light: #F8F6F1;
+  --color-text-light-secondary: #C3C7CE;
+  --color-text-light-muted: #858992;
   
   /* Structural Borders and Dividers */
-  --color-border: #E5E2DC;
-  --color-border-subtle: #ECE8E0;
-  --color-border-dark: #2A2A2A;
-  --color-border-dark-subtle: #1F1F1F;
+  --color-border: #E8E5DF;
+  --color-border-subtle: #F2EFE9;
+  --color-border-dark: #222222;
+  --color-border-dark-subtle: #181818;
 
   /* Accent Highlight (Restrained Royal Blue) */
   --color-royal-blue: #1E3A8A;
   --color-royal-blue-soft: #2563EB;
 
   /* WhatsApp Action Identity */
-  --color-whatsapp: #168A4A;
-  --color-whatsapp-hover: #12703C;
-  --color-whatsapp-active: #0E582E;
+  --color-whatsapp: #15803D;
+  --color-whatsapp-hover: #166534;
+  --color-whatsapp-active: #14532D;
   --color-whatsapp-bg-soft: #E8F5EE;
 
   /* Typography */
@@ -57,19 +68,19 @@
   --space-4xl: 96px;
 
   /* Container & Layout */
-  --container-max: 1280px;
-  --container-narrow: 1040px;
-  --header-height: 80px;
-  --radius-sm: 3px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --container-max: 1320px;
+  --container-narrow: 1080px;
+  --header-height: 76px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
   --radius-full: 9999px;
 
   /* Restrained Luxury Shadows */
   --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
-  --shadow-elevated: 0 12px 36px rgba(0, 0, 0, 0.12);
-  --shadow-dark: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 16px 44px rgba(0, 0, 0, 0.12);
+  --shadow-dark: 0 20px 50px rgba(0, 0, 0, 0.65);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);

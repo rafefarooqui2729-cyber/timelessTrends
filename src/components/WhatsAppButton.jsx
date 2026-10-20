@@ -15,8 +15,9 @@ export function WhatsAppButton({
   label = 'Enquire on WhatsApp',
   variantStyle = 'primary', // 'primary' | 'outline' | 'compact'
   className = '',
-  showIcon = true,
-  ariaLabel
+    showIcon = true,
+  ariaLabel,
+  style
 }) {
   const [showSetupModal, setShowSetupModal] = useState(false);
 

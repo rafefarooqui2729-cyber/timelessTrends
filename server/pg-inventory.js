@@ -1,4 +1,4 @@
-
+﻿
 const { HttpError } = require('./util');
 const { withTransaction, audit } = require('./pg-database');
 
@@ -293,6 +293,7 @@ async function receiveStock(db, {
   reference = null,
   notes = null,
   userId = null,
+  offerId = undefined,
 }) {
   if (!Array.isArray(items) || items.length === 0) {
     throw new HttpError(400, 'At least one stock item is required');
@@ -419,6 +420,41 @@ async function receiveStock(db, {
       });
     }
 
+        if (offerId !== undefined) {
+      if (items.length !== 1) {
+        throw new HttpError(400, 'An offer can only be applied to one watch per stock receipt');
+      }
+
+      const variant = await getVariant(client, items[0].variantId);
+
+      const offer = await client.query(
+        `SELECT id FROM offers
+         WHERE id = $1
+           AND is_active = 1
+           AND (start_date IS NULL OR start_date <= CURRENT_DATE)
+           AND (end_date IS NULL OR end_date >= CURRENT_DATE)`,
+        [offerId]
+      );
+
+      if (offer.rows.length === 0) {
+        throw new HttpError(400, 'Selected offer is unavailable or expired');
+      }
+
+      await client.query(
+        'UPDATE products SET offer_id = $1, updated_at = NOW() WHERE id = $2',
+        [offerId, variant.product_id]
+      );
+
+      await audit(
+        client,
+        userId,
+        'product.offer_apply',
+        'product',
+        variant.product_id,
+        { offerId, purchaseId }
+      );
+    }
+    
     await audit(
       client,
       userId,

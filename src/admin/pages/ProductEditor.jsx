@@ -11,9 +11,12 @@ export function ProductEditor() {
   const { id } = useParams();
   const isNew = !id || id === 'new';
   const navigate = useNavigate();
-  const { isInventoryManager, isSuperAdmin } = useAdminAuth();
+  const { isInventoryManager, isSuperAdmin, isMarketingManager } = useAdminAuth();
+  const canManageOffers = isSuperAdmin || isMarketingManager;
 
   const [categories, setCategories] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [selectedOfferId, setSelectedOfferId] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -51,10 +54,31 @@ export function ProductEditor() {
 
   useEffect(() => {
     loadCategories();
+    if (canManageOffers) loadOffers();
     if (!isNew) {
       loadProduct();
     }
   }, [id]);
+
+  async function loadOffers() {
+  try {
+    const data = await api('/api/admin/offers');
+
+    const today = new Date().toLocaleDateString('en-CA');
+
+    const availableOffers = data.filter((offer) => {
+      return (
+        Number(offer.is_active) === 1 &&
+        (!offer.start_date || offer.start_date <= today) &&
+        (!offer.end_date || offer.end_date >= today)
+      );
+    });
+
+    setOffers(availableOffers);
+  } catch (err) {
+    console.error('Failed to load offers:', err.message);
+  }
+}
 
   async function loadCategories() {
     try {
@@ -74,6 +98,7 @@ export function ProductEditor() {
       setCategory(p.category || '');
       setSellingPrice(p.selling_price != null ? String(p.selling_price) : '');
       setOriginalPrice(p.original_price != null ? String(p.original_price) : '');
+      setSelectedOfferId(p.offer_id != null ? String(p.offer_id) : '');
       setDescription(p.description || '');
       setStatus(p.status || 'draft');
       setIsNewArrival(Boolean(p.is_new_arrival));
@@ -185,12 +210,15 @@ export function ProductEditor() {
     const validSpecs = specs.filter(s => s.label.trim() && s.value.trim());
 
     const payload = {
-      name: name.trim(),
-      brand: brand.trim() || null,
-      model: model.trim() || null,
-      category: category || null,
-      selling_price: sellingPrice ? Number(sellingPrice) : null,
-      original_price: originalPrice ? Number(originalPrice) : null,
+  name: name.trim(),
+  brand: brand.trim() || null,
+  model: model.trim() || null,
+  category: category || null,
+  selling_price: sellingPrice ? Number(sellingPrice) : null,
+  original_price: originalPrice ? Number(originalPrice) : null,
+  ...(canManageOffers
+    ? { offer_id: selectedOfferId ? Number(selectedOfferId) : null }
+    : {}),
       description: description.trim() || null,
       specs: validSpecs,
       status,
@@ -412,6 +440,40 @@ export function ProductEditor() {
             </div>
           </div>
         </div>
+
+        {/* Optional Manual Offer */}
+{canManageOffers && (
+  <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
+    <h3 className="admin-card-title" style={{ marginBottom: '12px' }}>
+      Apply Offer (Optional)
+    </h3>
+
+    <p style={{ fontSize: '0.8rem', color: '#999', marginBottom: '16px' }}>
+      No discount is applied unless you select an offer.
+      Expired or disabled offers automatically stop applying.
+    </p>
+
+    <div className="admin-form-group">
+      <label className="admin-form-label">Select Offer</label>
+
+      <select
+        className="admin-select"
+        value={selectedOfferId}
+        onChange={(e) => setSelectedOfferId(e.target.value)}
+      >
+        <option value="">No Offer — Use Normal Selling Price</option>
+
+        {offers.map((offer) => (
+          <option key={offer.id} value={String(offer.id)}>
+            {offer.title} — {offer.discount_type === 'percentage'
+              ? `${offer.discount_value}% OFF`
+              : `₹${offer.discount_value} OFF`}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
+)}
 
         {/* Section 3: Editorial Description */}
         <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>

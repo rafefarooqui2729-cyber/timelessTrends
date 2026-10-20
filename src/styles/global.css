@@ -14,6 +14,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-white);
   color: var(--color-text-primary);
+  overflow-x: hidden;
 }
 
 body {
@@ -26,49 +27,64 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  width: 100%;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 main {
   flex: 1 0 auto;
+  width: 100%;
 }
 
-/* Typography Defaults */
+/* Luxury Horological Typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
   color: var(--color-charcoal);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 h1 {
-  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
   letter-spacing: -0.02em;
 }
 
 h2 {
-  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-size: clamp(1.8rem, 3.8vw, 2.9rem);
+  letter-spacing: -0.015em;
 }
 
 h3 {
-  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
 }
 
 h4 {
   font-size: 1.25rem;
   font-family: var(--font-sans);
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 p {
   color: var(--color-text-secondary);
   font-size: 1rem;
+  line-height: 1.65;
 }
 
 a {
@@ -124,8 +140,8 @@ input, select, textarea {
   max-width: var(--container-max);
   margin-left: auto;
   margin-right: auto;
-  padding-left: clamp(16px, 4vw, 32px);
-  padding-right: clamp(16px, 4vw, 32px);
+  padding-left: clamp(16px, 4vw, 40px);
+  padding-right: clamp(16px, 4vw, 40px);
 }
 
 .container-narrow {
@@ -133,67 +149,79 @@ input, select, textarea {
   max-width: var(--container-narrow);
   margin-left: auto;
   margin-right: auto;
-  padding-left: clamp(16px, 4vw, 32px);
-  padding-right: clamp(16px, 4vw, 32px);
+  padding-left: clamp(16px, 4vw, 40px);
+  padding-right: clamp(16px, 4vw, 40px);
 }
 
 /* Editorial Section Layouts */
 .section {
-  padding-top: clamp(48px, 8vw, 96px);
-  padding-bottom: clamp(48px, 8vw, 96px);
+  padding-top: clamp(56px, 8vw, 104px);
+  padding-bottom: clamp(56px, 8vw, 104px);
 }
 
 .section-dark {
   background-color: var(--color-matte-black);
   color: var(--color-text-light);
+  border-top: 1px solid var(--color-border-dark);
+  border-bottom: 1px solid var(--color-border-dark);
 }
 
 .section-dark h1,
 .section-dark h2,
 .section-dark h3 {
-  color: var(--color-text-light);
+  color: var(--color-white);
 }
 
 .section-dark p {
-  color: var(--color-silver);
+  color: var(--color-text-light-secondary);
 }
 
 .section-ivory {
   background-color: var(--color-ivory);
 }
 
-/* Editorial Header Block */
+/* Editorial Section Header Block */
 .section-header {
   text-align: center;
-  max-width: 720px;
-  margin: 0 auto clamp(32px, 5vw, 64px);
+  max-width: 760px;
+  margin: 0 auto clamp(36px, 5vw, 64px);
 }
 
 .section-subtitle {
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   color: var(--color-gold);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
   display: block;
 }
 
 .section-title {
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
+  color: var(--color-charcoal);
+}
+
+.section-dark .section-title {
+  color: var(--color-white);
 }
 
 .section-description {
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: clamp(0.95rem, 1.4vw, 1.08rem);
+  line-height: 1.65;
+  color: var(--color-text-secondary);
 }
 
-/* Metallic Divider Line */
+.section-dark .section-description {
+  color: var(--color-text-light-secondary);
+}
+
+/* Muted Champagne Gold Divider */
 .gold-divider {
-  width: 48px;
+  width: 44px;
   height: 2px;
-  background-color: var(--color-gold);
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
   margin: var(--space-md) auto;
 }
 
@@ -202,15 +230,18 @@ input, select, textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   padding: 13px 28px;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   border-radius: var(--radius-sm);
   transition: all var(--transition-normal);
   text-decoration: none;
+  min-height: 46px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -220,9 +251,10 @@ input, select, textarea {
 }
 
 .btn-primary:hover {
-  background-color: var(--color-matte-black);
+  background-color: #000;
   border-color: var(--color-gold);
   color: var(--color-gold-light);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
 }
 
 .btn-outline {
@@ -234,17 +266,33 @@ input, select, textarea {
 .btn-outline:hover {
   border-color: var(--color-charcoal);
   background-color: var(--color-ivory);
+  color: var(--color-charcoal);
 }
 
 .btn-gold {
   background-color: var(--color-gold);
-  color: var(--color-white);
+  color: #111111;
   border: 1px solid var(--color-gold);
+  font-weight: 700;
 }
 
 .btn-gold:hover {
   background-color: var(--color-gold-hover);
   border-color: var(--color-gold-hover);
+  color: #050505;
+  box-shadow: 0 6px 20px rgba(194, 166, 118, 0.35);
+}
+
+.btn-outline-gold {
+  background-color: transparent;
+  color: var(--color-gold-light);
+  border: 1px solid var(--color-gold-border);
+}
+
+.btn-outline-gold:hover {
+  background-color: var(--color-gold-soft);
+  border-color: var(--color-gold);
+  color: #FFFFFF;
 }
 
 .btn-whatsapp {
@@ -257,7 +305,7 @@ input, select, textarea {
 .btn-whatsapp:hover {
   background-color: var(--color-whatsapp-hover);
   border-color: var(--color-whatsapp-hover);
-  box-shadow: 0 4px 16px rgba(22, 138, 74, 0.25);
+  box-shadow: 0 6px 20px rgba(21, 128, 61, 0.3);
 }
 
 .btn-whatsapp-outline {
@@ -267,7 +315,10 @@ input, select, textarea {
 }
 
 .btn-whatsapp-outline:hover {
-  background-color: var(--color-whatsapp-bg-soft);
+  background-color: #25D366;
+  border-color: #25D366;
+  color: #FFFFFF;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
 }
 
 /* Reduced Motion Preference */

@@ -13,6 +13,7 @@ export function InventoryManagement() {
   const [valuation, setValuation] = useState(null);
   const [movements, setMovements] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -42,7 +43,8 @@ const [stockModal, setStockModal] = useState({
   supplierId: '',
   unitCost: '',
   reference: '',
-  notes: ''
+  notes: '',
+  offerId: ''
 });
 
 const selectedStockVariant = inventory.find(
@@ -63,6 +65,10 @@ const [modalError, setModalError] = useState(null);
 
       const suppRes = await api('/api/admin/suppliers').catch(() => []);
       setSuppliers(suppRes || []);
+      if (isSuperAdmin) {
+  const offersRes = await api('/api/admin/offers');
+  setOffers((offersRes || []).filter((offer) => offer.status === 'active'));
+}
 
       if (activeTab === 'movements') {
         const movRes = await api('/api/admin/stock/movements');
@@ -165,7 +171,8 @@ const [modalError, setModalError] = useState(null);
         quantity: '',
         unitCost: '',
         reference: '',
-        notes: ''
+        notes: '',
+        offerId: ''
       });
       await loadData();
     } catch (err) {

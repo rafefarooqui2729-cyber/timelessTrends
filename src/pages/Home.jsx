@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, Clock, Compass, Gem } from 'lucide-react';
+import { ArrowRight, Sparkles, Shield, Clock, Compass, Gem, MessageCircle, ChevronDown, Award } from 'lucide-react';
 import { siteConfig } from '../config/siteConfig';
 import { fetchPublicProducts } from '../utils/publicProductsApi';
 import { ProductGrid } from '../components/ProductGrid';
@@ -9,192 +9,278 @@ import { WhatsAppButton } from '../components/WhatsAppButton';
 export function Home() {
   const [featuredWatches, setFeaturedWatches] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
-  const categories = (siteConfig.categories || []).filter(c => c.id !== 'all');
+  const [categoriesWithCounts, setCategoriesWithCounts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetchPublicProducts()
-      .then((all) => {
-        if (!cancelled) {
-          setFeaturedWatches(all.filter((p) => p.featured).slice(0, 4));
-          setNewArrivals(all.filter((p) => p.isNewArrival).slice(0, 4));
-        }
-      })
-      .catch(() => {});
+
+    async function loadStoreData() {
+      try {
+        const all = await fetchPublicProducts();
+        if (cancelled) return;
+
+        // Section 5A: Featured Watches from real database
+        const featured = all.filter((p) => p.featured);
+        setFeaturedWatches(featured.length > 0 ? featured.slice(0, 4) : all.slice(0, 4));
+
+        // Section 5B: New Arrivals from real database
+        const arrivals = all.filter((p) => p.isNewArrival);
+        setNewArrivals(arrivals.slice(0, 4));
+
+        // Section 5C: Real category counts
+        const baseCategories = (siteConfig.categories || []).filter((c) => c.id !== 'all');
+        const computed = baseCategories.map((cat) => ({
+          ...cat,
+          count: all.filter((p) => {
+            if (cat.id === 'mens') return p.category === 'mens' || (p.name && /men/i.test(p.name));
+            if (cat.id === 'womens') return p.category === 'womens' || (p.name && /women/i.test(p.name));
+            return p.category === cat.id;
+          }).length,
+        }));
+        setCategoriesWithCounts(computed);
+      } catch (err) {
+        console.error('Failed to load homepage watches:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadStoreData();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
+  const scrollToContent = () => {
+    const target = document.getElementById('discover-collection');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="home-page">
-      {/* Editorial Hero Section */}
-      <section className="hero-section" aria-label="Brand Introduction">
+      {/* ------------------------------------------------------------------
+          1. CINEMATIC HERO SECTION
+          Full opening viewport with luxury watch photography and independent branding
+          ------------------------------------------------------------------ */}
+      <section className="cinematic-hero" aria-label="Brand Introduction">
+        {/* Subtle Luxury Top Bar inside Hero (since navbar is hidden initially) */}
+        <div className="hero-top-bar">
+          <div className="container hero-top-bar-inner">
+            <div className="hero-top-brand">
+              <span className="hero-brand-name">{siteConfig.brandName}</span>
+              <span className="hero-brand-divider">•</span>
+              <span className="hero-brand-tag">ELEGANCE IN EVERY SECOND</span>
+            </div>
+            <div className="hero-top-actions">
+              <Link to="/shop" className="hero-top-link">
+                Catalogue
+              </Link>
+              <WhatsAppButton
+                label="WhatsApp"
+                variantStyle="outline"
+                className="hero-top-wa"
+                showIcon={true}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Main Content */}
+        <div className="container hero-main-container">
+          <div className="hero-text-block">
+            {/* Eyebrow */}
+            <div className="hero-eyebrow-pill">
+              <span className="hero-eyebrow-dot" />
+              <span className="hero-eyebrow-text">TIMELESS CRAFTSMANSHIP</span>
+            </div>
+
+            {/* Headline */}
+            <h1 className="hero-heading">
+              Where Every Second Speaks Style.
+            </h1>
+
+            {/* Supporting Text */}
+            <p className="hero-lead">
+              Discover watches that bring together character, craftsmanship, and confidence.
+              Hand-selected for distinguished proportions, exquisite dial balance, and effortless refinement.
+            </p>
+
+            {/* Actions */}
+            <div className="hero-cta-group">
+              <Link to="/shop" className="btn btn-gold hero-primary-btn">
+                <span>Explore The Collection</span>
+                <ArrowRight size={17} />
+              </Link>
+
+              <WhatsAppButton
+                label="Enquire on WhatsApp"
+                variantStyle="outline"
+                className="btn-outline-gold hero-wa-btn"
+              />
+            </div>
+
+            {/* Subtle Commitments Row */}
+            <div className="hero-commitments-row">
+              <div className="hero-commitment-item">
+                <Shield size={14} />
+                <span>100% Genuine Timepieces</span>
+              </div>
+              <div className="hero-commitment-item">
+                <Clock size={14} />
+                <span>Precision Finishing</span>
+              </div>
+              <div className="hero-commitment-item">
+                <MessageCircle size={14} />
+                <span>Direct WhatsApp Consultation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll Indicator Prompt */}
+        <div className="hero-scroll-indicator" onClick={scrollToContent} role="button" tabIndex={0}>
+          <span className="scroll-label">Scroll To Discover</span>
+          <div className="scroll-line">
+            <span className="scroll-dot" />
+          </div>
+        </div>
+
+        {/* Smooth visual gradient transition dissolving into deep charcoal content */}
+        <div className="hero-bottom-fade" aria-hidden="true" />
+      </section>
+
+      {/* ------------------------------------------------------------------
+          2. BRAND VALUE PILLARS STRIP
+          ------------------------------------------------------------------ */}
+      <section className="brand-pillars-strip" id="discover-collection" aria-label="Brand Pillars">
         <div className="container">
-          <div className="hero-grid">
-            {/* Left Hero Narrative */}
-            <div className="hero-content">
-              <div className="hero-badge">
-                <Sparkles size={14} />
-                <span>Haute Horlogerie & Style</span>
+          <div className="pillars-grid">
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <Gem size={20} />
               </div>
-
-              <h1 className="hero-title">
-                Find your style. Choose your watch.
-                <span>Explore watches for every occasion.</span>
-              </h1>
-
-              <p className="hero-tagline">
-                Discover curated luxury timepieces, trending modern silhouettes, and timeless everyday classics. Hand-selected for exceptional aesthetic refinement.
-              </p>
-
-              <div className="hero-actions">
-                <Link to="/shop" className="btn btn-gold">
-                  <span>Explore Collection</span>
-                  <ArrowRight size={16} />
-                </Link>
-
-                <WhatsAppButton
-                  label="Enquire on WhatsApp"
-                  variantStyle="outline"
-                  className="btn-whatsapp-outline"
-                />
-              </div>
-
-              {/* Brand Commitments */}
-              <div className="hero-perks">
-                <div className="hero-perk-item">
-                  <Gem size={16} />
-                  <span>Curated Aesthetics</span>
-                </div>
-                <div className="hero-perk-item">
-                  <Shield size={16} />
-                  <span>Genuine Products</span>
-                </div>
-                <div className="hero-perk-item">
-                  <Clock size={16} />
-                  <span>Trusted Service</span>
-                </div>
+              <div>
+                <h4 className="pillar-title">Curated Aesthetics</h4>
+                <p className="pillar-text">Only silhouettes that balance poise, dial clarity, and enduring prestige.</p>
               </div>
             </div>
 
-            {/* Right Hero Visual Showcase */}
-            <div className="hero-visual">
-              <div className="hero-image-wrapper">
-                <img
-                  src="/images/products/chronograph-silver.svg"
-                  alt="Aethelgard Master Chronograph - Signature Timepiece"
-                />
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <Award size={20} />
               </div>
+              <div>
+                <h4 className="pillar-title">Guaranteed Quality</h4>
+                <p className="pillar-text">Every timepiece thoroughly verified for flawless operation and finish.</p>
+              </div>
+            </div>
 
-              {/* Editorial Floating Accent Card */}
-              <div className="hero-floating-card">
-                <span className="card-label">Signature Piece</span>
-                <div className="card-title">Aethelgard Master Chrono</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-silver)' }}>
-                  Sunburst Steel &amp; Sapphire Glass
-                </div>
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <MessageCircle size={20} />
+              </div>
+              <div>
+                <h4 className="pillar-title">Direct WhatsApp Support</h4>
+                <p className="pillar-text">Real-time availability, personalized wrist advice, and swift response.</p>
+              </div>
+            </div>
+
+            <div className="pillar-item">
+              <div className="pillar-icon-box">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h4 className="pillar-title">Regular New Edits</h4>
+                <p className="pillar-text">Fresh catalog additions regularly introduced to elevate your signature style.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Brand Value Pillars Section */}
-      <section className="section section-ivory" style={{ padding: '40px 0', borderBottom: '1px solid var(--color-border)' }}>
-        <div className="container">
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '24px',
-            alignItems: 'center'
-          }}>
-            {siteConfig.brandMessage.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--color-gold)',
-                  flexShrink: 0
-                }} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-charcoal)', letterSpacing: '0.02em' }}>
-                  {msg}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Watches Showcase */}
-      <section className="section" aria-label="Featured Watches">
+      {/* ------------------------------------------------------------------
+          3. FEATURED TIMEPIECES (Section 5A)
+          Real verified featured products from the database
+          ------------------------------------------------------------------ */}
+      <section className="section featured-section" aria-label="Featured Watches">
         <div className="container">
           <div className="section-header">
-            <span className="section-subtitle">Curated Highlights</span>
-            <h2 className="section-title">Signature Selections</h2>
+            <span className="section-subtitle">CURATED HIGHLIGHTS</span>
+            <h2 className="section-title">Featured Timepieces</h2>
             <div className="gold-divider" />
             <p className="section-description">
-              Hand-picked models celebrating superior proportions, exquisite dial balance, and versatile wearability.
+              Hand-selected models celebrating superior proportions, exquisite dial balance, and versatile wearability.
             </p>
           </div>
 
-          <ProductGrid products={featuredWatches} />
+          {featuredWatches.length > 0 ? (
+            <>
+              <ProductGrid products={featuredWatches} />
 
-          <div style={{ textAlign: 'center', marginTop: '48px' }}>
-            <Link to="/shop" className="btn btn-outline">
-              <span>View All Watches</span>
-              <ArrowRight size={16} />
-            </Link>
-          </div>
+              <div className="section-cta-center">
+                <Link to="/shop" className="btn btn-outline">
+                  <span>View All Watches</span>
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="empty-results-box" style={{ maxWidth: '640px', margin: '32px auto', textAlign: 'center' }}>
+              <span className="section-subtitle" style={{ marginBottom: '8px' }}>INCOMING CURATION</span>
+              <h3 style={{ fontSize: '1.75rem', marginBottom: '12px' }}>New Collection Arriving Soon</h3>
+              <p style={{ color: 'var(--color-text-secondary)', marginBottom: '24px', lineHeight: 1.6 }}>
+                We are currently cataloguing our latest shipment of fine timepieces.
+                For bespoke inquiries, early reservations, or custom sourcing, please message us directly on WhatsApp.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <WhatsAppButton
+                  label="Inquire on WhatsApp"
+                  variantStyle="primary"
+                  className="btn-whatsapp"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Curated Categories / Collections Banner */}
-      <section className="section section-dark" aria-label="Collections Overview">
+      {/* ------------------------------------------------------------------
+          4. BROWSE BY COLLECTION (Section 5C)
+          Dynamic categories with active watch counts
+          ------------------------------------------------------------------ */}
+      <section className="section section-dark collections-overview-section" aria-label="Distinctive Collections">
         <div className="container">
           <div className="section-header">
-            <span className="section-subtitle">Distinctive Categories</span>
+            <span className="section-subtitle">DISTINCTIVE EDITS</span>
             <h2 className="section-title">Browse By Collection</h2>
             <div className="gold-divider" />
-            <p className="section-description" style={{ color: 'var(--color-silver)' }}>
+            <p className="section-description">
               Explore timepieces tailored for every mood, occasion, and signature expression.
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '24px'
-          }}>
-            {categories.map((cat) => (
+          <div className="collections-editorial-grid">
+            {categoriesWithCounts.map((cat) => (
               <Link
                 key={cat.id}
                 to={`/shop?category=${cat.id}`}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: '32px 28px',
-                  backgroundColor: '#191919',
-                  border: '1px solid var(--color-border-dark)',
-                  borderRadius: 'var(--radius-sm)',
-                  transition: 'all var(--transition-normal)'
-                }}
-                className="collection-card-item"
+                className="luxury-collection-card"
               >
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-gold)', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 600 }}>
-                  {cat.count} {cat.count === 1 ? 'Design' : 'Designs'}
-                </span>
-                <h3 style={{ color: '#fff', margin: '10px 0 8px', fontSize: '1.4rem' }}>
-                  {cat.name}
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-silver)', marginBottom: '20px', lineHeight: 1.5 }}>
-                  {cat.description}
-                </p>
-                <div style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--color-gold)', fontWeight: 600 }}>
-                  <span>Explore Series</span>
-                  <ArrowRight size={14} />
+                <div className="collection-card-glow" />
+                <div className="collection-card-inner">
+                  <span className="collection-count-badge">
+                    {cat.count} {cat.count === 1 ? 'Design' : 'Designs'}
+                  </span>
+                  <h3 className="collection-name">{cat.name}</h3>
+                  <p className="collection-desc">{cat.description}</p>
+                  <div className="collection-action-link">
+                    <span>Explore Edit</span>
+                    <ArrowRight size={15} />
+                  </div>
                 </div>
               </Link>
             ))}
@@ -202,13 +288,16 @@ export function Home() {
         </div>
       </section>
 
-      {/* New Arrivals Section */}
+      {/* ------------------------------------------------------------------
+          5. NEW ARRIVALS SECTION (Section 5B)
+          Only displayed if new arrivals exist in database
+          ------------------------------------------------------------------ */}
       {newArrivals.length > 0 && (
-        <section className="section" aria-label="New Arrivals">
+        <section className="section new-arrivals-section" aria-label="New Arrivals">
           <div className="container">
             <div className="section-header">
-              <span className="section-subtitle">Fresh Additions</span>
-              <h2 className="section-title">Latest Arrivals</h2>
+              <span className="section-subtitle">LATEST SILHOUETTES</span>
+              <h2 className="section-title">New Arrivals</h2>
               <div className="gold-divider" />
               <p className="section-description">
                 The newest silhouettes to join our catalogue. Modern aesthetics meeting classic poise.
@@ -220,25 +309,30 @@ export function Home() {
         </section>
       )}
 
-      {/* Brand Closing Editorial Banner */}
-      <section className="section section-ivory" style={{ borderTop: '1px solid var(--color-border)' }}>
-        <div className="container" style={{ textAlign: 'center', maxWidth: '780px' }}>
+      {/* ------------------------------------------------------------------
+          6. BRAND PHILOSOPHY & WHATSAPP CONSULTATION BANNER
+          ------------------------------------------------------------------ */}
+      <section className="section section-ivory brand-philosophy-banner" aria-label="Brand Philosophy">
+        <div className="container philosophy-container">
           <span className="section-subtitle">TIMELESS TRENDS PHILOSOPHY</span>
-          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', margin: '16px 0 24px' }}>
+          <h2 className="philosophy-quote">
             "{siteConfig.closingStatement}"
           </h2>
-          
-<p style={{ fontSize: '1.05rem', color: 'var(--color-text-secondary)', marginBottom: '32px', lineHeight: 1.7 }}>
-  Discover a variety of watch designs for everyday wear, work, and special occasions. Explore the collection and contact us on WhatsApp for product details, pricing, and availability.
-</p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <p className="philosophy-description">
+            We believe acquiring a wristwatch should be an intimate, enjoyable experience.
+            Rather than automated checkout carts, we offer direct, personal assistance through WhatsApp.
+            Inquire about specific details, request wrist views, verify availability, and order with confidence.
+          </p>
+
+          <div className="philosophy-actions">
             <Link to="/shop" className="btn btn-primary">
               <span>View Full Catalogue</span>
             </Link>
             <WhatsAppButton
               label="Chat on WhatsApp"
               variantStyle="primary"
+              className="btn-whatsapp"
             />
           </div>
         </div>

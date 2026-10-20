@@ -10,6 +10,11 @@ const path = require('path');
 const fs = require('fs');
 const { z } = require('zod');
 const config = require('./config');
+const {
+  uploadImage,
+  deleteImage,
+  getPublicImageUrl
+} = require('./supabase-storage');
 const { createAdapter } = require('./db-adapter');
 const inv = require('./inventory');
 const ord = require('./orders');
@@ -111,45 +116,53 @@ function calculateDiscount(price, offer) {
 }
 
 function applyBestOfferToProduct(product, activeOffers) {
-  if (!product || product.selling_price == null) return { ...product, effective_price: product.selling_price, active_offer: null };
+  if (!product) return product;
 
-  const applicable = activeOffers.filter(o => {
-    if (o.scope === 'all') return true;
-    if (o.scope === 'category' && product.category && o.target_id === product.category) return true;
-    if (o.scope === 'product' && String(o.target_id) === String(product.id)) return true;
-    return false;
-  });
+  const normalPrice = product.selling_price;
 
-  if (applicable.length === 0) {
-    return { ...product, effective_price: product.selling_price, active_offer: null };
+  // No manually assigned offer = no discount.
+  if (product.offer_id == null || normalPrice == null) {
+    return {
+      ...product,
+      effective_price: normalPrice,
+      active_offer: null
+    };
   }
 
-  // Find best offer that yields lowest positive price
-  let bestOffer = applicable[0];
-  let bestPrice = calculateDiscount(product.selling_price, bestOffer);
+  // getActiveOffers() already excludes disabled,
+  // not-yet-started, and expired offers.
+  const assignedOffer = activeOffers.find(
+    (offer) => Number(offer.id) === Number(product.offer_id)
+  );
 
-  for (let i = 1; i < applicable.length; i++) {
-    const candidatePrice = calculateDiscount(product.selling_price, applicable[i]);
-    if (candidatePrice < bestPrice) {
-      bestPrice = candidatePrice;
-      bestOffer = applicable[i];
-    }
+  if (!assignedOffer) {
+    return {
+      ...product,
+      effective_price: normalPrice,
+      active_offer: null
+    };
   }
 
   return {
     ...product,
-    effective_price: bestPrice,
+    effective_price: calculateDiscount(normalPrice, assignedOffer),
     active_offer: {
-      id: bestOffer.id,
-      title: bestOffer.title,
-      badge_text: bestOffer.badge_text,
-      discount_type: bestOffer.discount_type,
-      discount_value: bestOffer.discount_value
+      id: assignedOffer.id,
+      title: assignedOffer.title,
+      badge_text: assignedOffer.badge_text,
+      discount_type: assignedOffer.discount_type,
+      discount_value: assignedOffer.discount_value
     }
   };
 }
 
 function createApp(rawDb, opts = {}) {
+  const storage = opts.storage || {
+    uploadImage,
+    deleteImage,
+    getPublicImageUrl
+  };
+
   const db = createAdapter(rawDb);
   const currentInv = db.isPg ? pgInv : inv;
   const currentOrd = db.isPg ? pgOrd : ord;
@@ -205,8 +218,8 @@ function createApp(rawDb, opts = {}) {
 
   const publicProducts = async (where = '', params = []) => {
     const products = await db.prepare(`
-      SELECT id, code, name, brand, model, slug, category, description, selling_price, original_price, specs,
-             is_new_arrival, is_featured, display_priority, date_added
+      SELECT id, code, name, brand, model, slug, category, description, selling_price, original_price, offer_id, specs,
+       is_new_arrival, is_featured, display_priority, date_added
       FROM products
       WHERE status='published' AND is_active=1 ${where}
       ORDER BY display_priority DESC, id DESC
@@ -219,7 +232,12 @@ function createApp(rawDb, opts = {}) {
       const rawVariants = await db.prepare('SELECT id, sku, colour, price_override, stock_on_hand - reserved AS avail FROM variants WHERE product_id=? AND is_active=1 ORDER BY id').all(p.id);
       const variants = rawVariants.map((v) => ({ id: v.id, sku: v.sku, colour: v.colour, price: v.price_override ?? p.selling_price ?? null, available: v.avail > 0 }));
       const rawImages = await db.prepare('SELECT id, variant_id, web_path, alt FROM images WHERE product_id=? ORDER BY sort_order, id').all(p.id);
-      const images = rawImages.map((i) => ({ id: i.id, variantId: i.variant_id, url: `/uploads/${i.web_path}`, alt: i.alt }));
+      const images = rawImages.map((i) => ({
+  id: i.id,
+  variantId: i.variant_id,
+  url: storage.getPublicImageUrl(i.web_path),
+  alt: i.alt
+}));
 
       const pricedProduct = applyBestOfferToProduct(p, activeOffers);
       const prices = variants.map((v) => v.price).filter((x) => x != null);
@@ -720,7 +738,10 @@ admin.get(
       LEFT JOIN variants v ON v.id = i.variant_id
       ORDER BY i.id DESC
     `).all();
-    const images = rawImages.map(img => ({ ...img, url: `/uploads/${img.web_path}` }));
+    const images = rawImages.map(img => ({
+  ...img,
+  url: getPublicImageUrl(img.web_path)
+}));
     res.json(images);
   }));
 
@@ -756,8 +777,9 @@ admin.get(
   }));
 
   // Products
-  const productSchema = z.object({
+    const productSchema = z.object({
     name: z.string().min(1).max(120),
+    offer_id: z.number().int().positive().nullable().optional(),
     brand: nullish(z.string().max(60)),
     model: nullish(z.string().max(60)),
     category: nullish(z.string().max(60)),
@@ -775,6 +797,30 @@ admin.get(
     is_active: z.boolean().optional(),
     date_added: date.optional()
   });
+
+    const validateSelectedOffer = async (offerId) => {
+    if (offerId == null) return;
+
+    const offer = await db.prepare(
+      'SELECT id FROM offers WHERE id = ?'
+    ).get(offerId);
+
+    if (!offer) {
+      throw new HttpError(400, 'Selected offer does not exist');
+    }
+
+    const activeOffers = await getActiveOffers(db);
+    const isActive = activeOffers.some(
+      (o) => Number(o.id) === Number(offerId)
+    );
+
+    if (!isActive) {
+      throw new HttpError(
+        400,
+        'Selected offer is disabled, expired, or not yet active'
+      );
+    }
+  };
 
   const variantSchema = z.object({
     colour: z.string().min(1).max(40),
@@ -811,11 +857,19 @@ admin.get(
       const vid = resInsert.lastInsertRowid;
 
       if (v.stock_on_hand > 0) {
-        await db.prepare(`
-          INSERT INTO stock_movements (occurred_at, occurred_on, product_id, variant_id, movement_type, quantity_change, previous_qty, new_qty, unit_cost, reason)
-          VALUES (?,?,?,?,'purchase_received',?,0,?,?,'Initial stock receipt')
-        `).run(new Date().toISOString(), localDate(), productId, vid, v.stock_on_hand, v.stock_on_hand, v.avg_cost ?? null);
-      }
+  await txDb.prepare(`
+    INSERT INTO stock_movements (occurred_at, occurred_on, product_id, variant_id, movement_type, quantity_change, previous_qty, new_qty, unit_cost, reason)
+    VALUES (?,?,?,?,'purchase_received',?,0,?,?,'Initial stock receipt')
+  `).run(
+    new Date().toISOString(),
+    localDate(),
+    productId,
+    vid,
+    v.stock_on_hand,
+    v.stock_on_hand,
+    v.avg_cost ?? null
+  );
+}
       return vid;
     } catch (e) {
       if (/unique|duplicate key/i.test(e.message)) throw new HttpError(409, `Colour "${v.colour}" already exists for this product`);
@@ -883,7 +937,7 @@ const productRow = async (id, requesterRole = 'super_admin') => {
     web_path: i.web_path,
     alt: i.alt,
     sort_order: i.sort_order,
-    url: `/uploads/${i.web_path}`
+    url: storage.getPublicImageUrl(i.web_path)
   }));
 
   return {
@@ -922,19 +976,28 @@ const productRow = async (id, requesterRole = 'super_admin') => {
   admin.get('/products/:id', wrap(async (req, res) => res.json(await productRow(Number(req.params.id), req.user.role))));
 
   admin.post('/products', requirePermission('products:write'), wrap(async (req, res) => {
-    const b = parse(productSchema.extend({ variants: z.array(variantSchema).min(1) }), req.body);
+   const b = parse(productSchema.extend({ variants: z.array(variantSchema).min(1) }), req.body);
+
+if (b.offer_id != null) {
+  await validateSelectedOffer(b.offer_id);
+
+  if (!hasPermission(req.user.role, 'offers:write')) {
+    throw new HttpError(403, 'You do not have permission to apply offers');
+  }
+}
     const tx = db.transaction(async (txDb) => {
       const now = new Date().toISOString();
       const slug = await uniqueSlug(b.name);
       const resInsert = await txDb.prepare(`
         INSERT INTO products (code, name, brand, model, slug, category, description, selling_price, original_price,
-          specs, stock_location, is_new_arrival, is_featured, display_priority, new_arrival_start, new_arrival_end,
-          status, is_active, date_added, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  offer_id, specs, stock_location, is_new_arrival, is_featured, display_priority, new_arrival_start, new_arrival_end,
+  status, is_active, date_added, created_at, updated_at)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       `).run(
         `TMP${Math.random()}`, b.name, b.brand ?? null, b.model ?? null, slug,
-        b.category ?? null, b.description ?? null, b.selling_price ?? null, b.original_price ?? null,
-        JSON.stringify(b.specs || []), b.stock_location ?? null, b.is_new_arrival ? 1 : 0, b.is_featured ? 1 : 0,
+      b.category ?? null, b.description ?? null, b.selling_price ?? null, b.original_price ?? null,
+      b.offer_id ?? null,
+      JSON.stringify(b.specs || []), b.stock_location ?? null, b.is_new_arrival ? 1 : 0, b.is_featured ? 1 : 0,
         b.display_priority ?? 0, b.new_arrival_start ?? null, b.new_arrival_end ?? null,
         b.status || 'draft', b.is_active === false ? 0 : 1, b.date_added || localDate(), now, now
       );
@@ -958,7 +1021,17 @@ const productRow = async (id, requesterRole = 'super_admin') => {
     if (!cur) throw new HttpError(404, 'Product not found');
     const b = parse(productSchema.partial(), req.body);
 
-    const m = { ...b };
+if (b.offer_id !== undefined) {
+  if (!hasPermission(req.user.role, 'offers:write')) {
+    throw new HttpError(403, 'You do not have permission to change offers');
+  }
+
+  if (b.offer_id !== null) {
+    await validateSelectedOffer(b.offer_id);
+  }
+}
+
+const m = { ...b };
     if (m.specs) m.specs = JSON.stringify(m.specs);
     ['is_new_arrival', 'is_featured', 'is_active'].forEach((k) => { if (k in m) m[k] = m[k] ? 1 : 0; });
     if (b.name && b.name !== cur.name) m.slug = await uniqueSlug(b.name, id);
@@ -1174,22 +1247,20 @@ const productRow = async (id, requesterRole = 'super_admin') => {
           const originalPath = `${name}.${ext}`;
           const webPath = `${name}.webp`;
 
-          fs.writeFileSync(
-            path.join(orig, originalPath),
-            file.buffer
-          );
+          // Optimize the uploaded image into WebP format.
+const optimizedBuffer = await sharp(file.buffer)
+  .rotate()
+  .resize({
+    width: 1600,
+    height: 1600,
+    fit: 'inside',
+    withoutEnlargement: true
+  })
+  .webp({ quality: 82 })
+  .toBuffer();
 
-          await sharp(file.buffer)
-            .rotate()
-            .resize({
-              width: 1600,
-              height: 1600,
-              fit: 'inside',
-              withoutEnlargement: true
-            })
-            .webp({ quality: 82 })
-            .toFile(path.join(web, webPath));
-
+// Save the optimized image permanently in Supabase Storage.
+await storage.uploadImage(webPath, optimizedBuffer);
           savedFiles.push({
             originalPath,
             webPath,
@@ -1228,36 +1299,65 @@ const productRow = async (id, requesterRole = 'super_admin') => {
 
         res.status(201).json(await productRow(pid, req.user.role));
       } catch (e) {
-        // Remove newly created files if image processing or saving fails.
-        for (const file of savedFiles) {
-          try {
-            fs.unlinkSync(path.join(orig, file.originalPath));
-          } catch {}
+  // Remove uploaded Supabase objects if processing or saving fails.
+  for (const file of savedFiles) {
+    try {
+await storage.deleteImage(file.webPath);
+    } catch (cleanupError) {
+      console.error(
+        'Supabase image cleanup failed:',
+        cleanupError.message
+      );
+    }
+  }
 
-          try {
-            fs.unlinkSync(path.join(web, file.webPath));
-          } catch {}
-        }
+  if (e instanceof HttpError) {
+    throw e;
+  }
 
-        if (e instanceof HttpError) throw e;
+  console.error('Image upload failed:', e);
 
-        throw new HttpError(
-          400,
-          'Failed to process images: ' + (e.message || 'Invalid file')
-        );
-      }
-    })
+  throw new HttpError(
+    500,
+    'Failed to upload product images'
+  );
+}
+})
   );
 
 
-  admin.delete('/images/:id', requirePermission('media:write'), wrap(async (req, res) => {
-    const img = await db.prepare('SELECT * FROM images WHERE id=?').get(Number(req.params.id));
-    if (!img) throw new HttpError(404, 'Image not found');
-    await db.prepare('DELETE FROM images WHERE id=?').run(img.id);
-    try { fs.unlinkSync(path.join(web, img.web_path)); } catch {}
-    await audit(db, req.user.id, 'image.delete', 'product', img.product_id, { imageId: img.id });
+  admin.delete(
+  '/images/:id',
+  requirePermission('media:write'),
+  wrap(async (req, res) => {
+    const img = await db.prepare(
+      'SELECT * FROM images WHERE id=?'
+    ).get(Number(req.params.id));
+
+    if (!img) {
+      throw new HttpError(404, 'Image not found');
+    }
+
+    // Delete image from Supabase Storage first.
+await storage.deleteImage(img.web_path);
+
+    // Delete image metadata from PostgreSQL.
+    await db.prepare(
+      'DELETE FROM images WHERE id=?'
+    ).run(img.id);
+
+    await audit(
+      db,
+      req.user.id,
+      'image.delete',
+      'product',
+      img.product_id,
+      { imageId: img.id }
+    );
+
     res.json(await productRow(img.product_id, req.user.role));
-  }));
+  })
+);
 
   // Inventory Management
   admin.get('/inventory', requirePermission('inventory:read'), wrap(async (req, res) => {
@@ -1296,9 +1396,24 @@ const productRow = async (id, requesterRole = 'super_admin') => {
     items: z.array(z.object({ variantId: z.number().int(), quantity: z.number().int().positive(), unitCost: money.nullish() })).min(1)
   });
 
-  admin.post('/stock/receive', requirePermission('inventory:write'), wrap(async (req, res) => {
-    const b = parse(receiveSchema, req.body);
-    const purchaseId = await currentInv.receiveStock(db, { ...b, userId: req.user.id });
+    admin.post('/stock/receive', requirePermission('inventory:write'), wrap(async (req, res) => {
+    const b = parse(receiveSchema.extend({
+      offerId: z.number().int().positive().optional()
+    }), req.body);
+
+    if (b.offerId !== undefined) {
+      if (!hasPermission(req.user.role, 'offers:write')) {
+        throw new HttpError(403, 'You do not have permission to apply offers');
+      }
+
+      await validateSelectedOffer(b.offerId);
+    }
+
+    const purchaseId = await currentInv.receiveStock(db, {
+      ...b,
+      userId: req.user.id
+    });
+
     res.status(201).json({ purchaseId });
   }));
 

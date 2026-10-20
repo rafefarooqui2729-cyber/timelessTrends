@@ -1,12 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { Menu, X, MessageCircle } from 'lucide-react';
+import { Menu, X, Search, MessageCircle } from 'lucide-react';
 import { siteConfig } from '../config/siteConfig';
 import { WhatsAppButton } from './WhatsAppButton';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isHome = location.pathname === '/';
+  const [scrolled, setScrolled] = useState(!isHome);
+
+  // Scroll detection on Home page
+  useEffect(() => {
+    if (!isHome) {
+      setScrolled(true);
+      return;
+    }
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const isPastThreshold = window.scrollY > 180;
+          setScrolled(isPastThreshold);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHome]);
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -26,122 +52,154 @@ export function Header() {
   }, [mobileMenuOpen]);
 
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/shop', label: 'All Watches' },
-    { to: '/collections', label: 'Collections' },
-    { to: '/about', label: 'About Us' },
-    { to: '/contact', label: 'Contact' },
+    { to: '/', label: 'Home', end: true },
+    { to: '/shop', label: 'All Watches', end: true },
+    { to: '/shop?category=mens', label: "Men's", end: false },
+    { to: '/shop?category=womens', label: "Women's", end: false },
+    { to: '/collections', label: 'Collections', end: false },
+    { to: '/about', label: 'About Us', end: false },
+    { to: '/contact', label: 'Contact', end: false },
   ];
 
+  const headerClass = [
+    'site-header',
+    isHome ? 'site-header-home' : 'site-header-standard',
+    scrolled ? 'is-scrolled' : 'is-initial',
+  ].filter(Boolean).join(' ');
+
   return (
-    <header className="site-header">
-      <div className="container header-inner">
-        {/* Brand Wordmark & Tagline */}
-        <Link to="/" className="brand-logo-link" aria-label="TIMELESS TRENDS Homepage">
-          <span className="brand-wordmark">{siteConfig.brandName}</span>
-          <span className="brand-submark">HAUTE HORLOGERIE & STYLE</span>
-        </Link>
+    <>
+      <header className={headerClass} role="banner">
+        <div className="container header-inner">
+          {/* Brand Wordmark & Tagline */}
+          <Link to="/" className="brand-logo-link" aria-label="TIMELESS TRENDS Homepage">
+            <span className="brand-wordmark">{siteConfig.brandName}</span>
+            <span className="brand-submark">ELEGANCE IN EVERY SECOND</span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="nav-desktop" aria-label="Primary Navigation">
-          {navLinks.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === '/'}
-              className={({ isActive }) =>
-                isActive ? 'nav-link active' : 'nav-link'
-              }
+          {/* Desktop Navigation */}
+          <nav className="nav-desktop" aria-label="Primary Navigation">
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                className={({ isActive }) =>
+                  isActive ? 'nav-link active' : 'nav-link'
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Header Right Actions */}
+          <div className="header-actions">
+            {/* Quick Search Shortcut */}
+            <Link
+              to="/shop"
+              className="header-search-link"
+              aria-label="Search watches catalogue"
+              title="Search catalogue"
             >
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
+              <Search size={18} />
+            </Link>
 
-        {/* Header Right Actions */}
-        <div className="header-actions">
-          <WhatsAppButton
-            label="WhatsApp Enquiry"
-            variantStyle="outline"
-            className="header-wa-btn"
-            ariaLabel="Contact Timeless Trends on WhatsApp"
-          />
+            {/* Direct WhatsApp Enquiry */}
+            <WhatsAppButton
+              label="WhatsApp"
+              variantStyle="outline"
+              className="header-wa-btn"
+              ariaLabel="Contact Timeless Trends on WhatsApp"
+            />
 
-          {/* Mobile Hamburger Button */}
-          <button
-            type="button"
-            className="mobile-menu-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Drawer Overlay */}
-      <div
-        className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}
-        onClick={() => setMobileMenuOpen(false)}
-        aria-hidden={!mobileMenuOpen}
-      />
-
-      {/* Mobile Drawer Panel */}
-      <div
-        className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Mobile Navigation"
-      >
-        <div className="mobile-nav-header">
-          <div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>
-              {siteConfig.brandName}
-            </div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--color-gold)', letterSpacing: '0.2em' }}>
-              COLLECTIONS
-            </div>
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              className="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: '#fff', padding: '4px' }}
-            aria-label="Close menu"
-          >
-            <X size={24} />
-          </button>
         </div>
 
-        <nav className="mobile-nav-links">
-          {navLinks.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === '/'}
-              className={({ isActive }) =>
-                isActive ? 'mobile-nav-link active' : 'mobile-nav-link'
-              }
+        {/* Mobile Drawer Overlay */}
+        <div
+          className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden={!mobileMenuOpen}
+        />
+
+        {/* Mobile Drawer Panel */}
+        <div
+          className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile Navigation"
+        >
+          <div className="mobile-nav-header">
+            <div>
+              <div className="mobile-brand-title">
+                {siteConfig.brandName}
+              </div>
+              <div className="mobile-brand-submark">
+                HAUTE HORLOGERIE & STYLE
+              </div>
+            </div>
+            <button
+              type="button"
               onClick={() => setMobileMenuOpen(false)}
+              className="mobile-nav-close"
+              aria-label="Close menu"
             >
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
+              <X size={22} />
+            </button>
+          </div>
 
-        <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--color-border-dark)' }}>
-          <p style={{ fontSize: '0.8rem', color: 'var(--color-silver)', marginBottom: '16px' }}>
-            {siteConfig.tagline}
-          </p>
-          <WhatsAppButton
-            label="Enquire on WhatsApp"
-            variantStyle="primary"
-            className="btn-whatsapp"
-            style={{ width: '100%' }}
-          />
+          <div className="mobile-search-bar">
+            <Link
+              to="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mobile-search-btn"
+            >
+              <Search size={16} />
+              <span>Search watches & collections...</span>
+            </Link>
+          </div>
+
+          <nav className="mobile-nav-links" aria-label="Mobile Primary Navigation">
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                className={({ isActive }) =>
+                  isActive ? 'mobile-nav-link active' : 'mobile-nav-link'
+                }
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>{link.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="mobile-nav-footer">
+            <p className="mobile-nav-tagline">
+              "{siteConfig.tagline}"
+            </p>
+            <WhatsAppButton
+              label="Enquire on WhatsApp"
+              variantStyle="primary"
+              className="btn-whatsapp"
+              style={{ width: '100%' }}
+            />
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
 

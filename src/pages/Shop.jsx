@@ -175,6 +175,23 @@ export function Shop() {
             products={filteredProducts}
             onReset={handleReset}
           />
+        ) : products.length === 0 ? (
+          <div
+            className="empty-results-box"
+            style={{ maxWidth: '640px', margin: '48px auto' }}
+          >
+            <span className="section-subtitle" style={{ marginBottom: '8px' }}>CATALOGUE PREPARATION</span>
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '12px' }}>New Timepieces Arriving Soon</h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '24px', lineHeight: 1.6 }}>
+              Our upcoming horological edit is currently being catalogued and will be listed shortly.
+              To inquire about specific models, incoming stock, or private appointments, contact us directly on WhatsApp.
+            </p>
+            <WhatsAppButton
+              label="Inquire on WhatsApp"
+              variantStyle="primary"
+              className="btn-whatsapp"
+            />
+          </div>
         ) : (
           <div
             className="section"
