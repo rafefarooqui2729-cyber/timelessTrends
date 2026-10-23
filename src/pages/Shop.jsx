@@ -5,7 +5,7 @@ import { fetchPublicProducts } from '../utils/publicProductsApi';
 import { filterAndSortProducts } from '../utils/products';
 import { ProductFilters } from '../components/ProductFilters';
 import { ProductGrid } from '../components/ProductGrid';
-
+import { WhatsAppButton } from '../components/WhatsAppButton';
 export function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
 

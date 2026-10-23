@@ -45,7 +45,8 @@ export function ProductEditor() {
 
   // Variants array
   const [variants, setVariants] = useState([
-    { colour: 'Default', price_override: '', min_stock: 2, stock_on_hand: 5, avg_cost: '' }
+
+{ colour: 'Default', price_override: '', min_stock: 2, stock_on_hand: 0, avg_cost: '' }
   ]);
 
   // Image Upload state

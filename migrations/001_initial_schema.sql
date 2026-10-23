@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   description TEXT,
   selling_price NUMERIC CHECK (selling_price IS NULL OR selling_price >= 0),
   original_price NUMERIC CHECK (original_price IS NULL OR original_price >= 0),
+  offer_id INTEGER REFERENCES public.offers(id) ON DELETE SET NULL,
   specs JSONB DEFAULT '[]'::jsonb,
   stock_location TEXT,
   is_new_arrival INTEGER NOT NULL DEFAULT 0 CHECK (is_new_arrival IN (0, 1)),

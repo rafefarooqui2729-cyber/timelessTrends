@@ -1,22 +1,31 @@
+
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'product-images';
+let supabase = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase Storage configuration is missing');
+function getSupabase() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase Storage configuration is missing');
+  }
+
+  if (!supabase) {
+    supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+  }
+
+  return supabase;
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false
-  }
-});
-
 async function uploadImage(filePath, buffer) {
-  const { error } = await supabase.storage
+  const { error } = await getSupabase().storage
     .from(bucket)
     .upload(filePath, buffer, {
       contentType: 'image/webp',
@@ -31,7 +40,7 @@ async function uploadImage(filePath, buffer) {
 }
 
 async function deleteImage(filePath) {
-  const { error } = await supabase.storage
+  const { error } = await getSupabase().storage
     .from(bucket)
     .remove([filePath]);
 
@@ -41,7 +50,7 @@ async function deleteImage(filePath) {
 }
 
 function getPublicImageUrl(filePath) {
-  const { data } = supabase.storage
+  const { data } = getSupabase().storage
     .from(bucket)
     .getPublicUrl(filePath);
 

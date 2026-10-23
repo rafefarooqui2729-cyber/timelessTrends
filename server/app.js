@@ -15,13 +15,25 @@ const {
   deleteImage,
   getPublicImageUrl
 } = require('./supabase-storage');
+
+function safePublicImageUrl(filePath) {
+  try {
+    return getPublicImageUrl(filePath);
+  } catch (error) {
+    if (error.message === 'Supabase Storage configuration is missing') {
+      return null;
+    }
+    throw error;
+  }
+}
+
 const { createAdapter } = require('./db-adapter');
 const inv = require('./inventory');
 const ord = require('./orders');
 const rep = require('./reports');
-const pgInv = require('./pg-inventory');
-const pgOrd = require('./pg-orders');
-const pgRep = require('./pg-reports');
+let pgInv;
+let pgOrd;
+let pgRep;
 const toCsv = require('./csv');
 const { HttpError, localDate, slugify, audit, checkDate } = require('./util');
 
@@ -164,9 +176,20 @@ function createApp(rawDb, opts = {}) {
   };
 
   const db = createAdapter(rawDb);
-  const currentInv = db.isPg ? pgInv : inv;
-  const currentOrd = db.isPg ? pgOrd : ord;
-  const currentRep = db.isPg ? pgRep : rep;
+
+let currentInv = inv;
+let currentOrd = ord;
+let currentRep = rep;
+
+if (db.isPg) {
+  pgInv = require('./pg-inventory');
+  pgOrd = require('./pg-orders');
+  pgRep = require('./pg-reports');
+
+  currentInv = pgInv;
+  currentOrd = pgOrd;
+  currentRep = pgRep;
+}
   const app = express();
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
@@ -339,8 +362,7 @@ function createApp(rawDb, opts = {}) {
 
   auth.post('/login', limiter(15 * 60_000, 10), wrap(async (req, res) => {
     const b = parse(z.object({ email: z.string().email(), password: z.string().min(1).max(200) }), req.body);
-    const u = await db.prepare('SELECT * FROM users WHERE email = ?').get(b.email.toLowerCase());
-    const ok = bcrypt.compareSync(b.password, u ? u.password_hash : '$2a$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidi');
+  const u = await db.prepare('SELECT * FROM users WHERE email = ?').get(b.email.toLowerCase());    const ok = bcrypt.compareSync(b.password, u ? u.password_hash : '$2a$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidi');
 
     if (!u || !ok) {
       await audit(db, null, 'auth.login_failed', 'user', b.email);
@@ -838,15 +860,32 @@ admin.get(
     return s;
   };
 
-    const addVariant = async (productId, code, v, txDb = db) => {    const countRow = await db.prepare('SELECT COUNT(*) AS n FROM variants WHERE product_id = ?').get(productId);
+
+  const addVariant = async (productId, code, v, txDb = db) => {
+    // Use the same transaction connection for the count and insert.
+    const countRow = await txDb
+      .prepare('SELECT COUNT(*) AS n FROM variants WHERE product_id = ?')
+      .get(productId);
+
     const n = Number(countRow?.n || 0) + 1;
+    const sku = `${code}-${String(n).padStart(2, '0')}`;
+
     try {
       const resInsert = await txDb.prepare(`
-        INSERT INTO variants (product_id, sku, colour, price_override, min_stock, stock_on_hand, avg_cost, created_at)
-        VALUES (?,?,?,?,?,?,?,?)
+        INSERT INTO variants (
+          product_id,
+          sku,
+          colour,
+          price_override,
+          min_stock,
+          stock_on_hand,
+          avg_cost,
+          created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         productId,
-        `${code}-${String(n).padStart(2, '0')}`,
+        sku,
         v.colour.trim(),
         v.price_override ?? null,
         v.min_stock ?? 2,
@@ -854,25 +893,45 @@ admin.get(
         v.avg_cost ?? null,
         new Date().toISOString()
       );
-      const vid = resInsert.lastInsertRowid;
+
+      const variantId = resInsert.lastInsertRowid;
 
       if (v.stock_on_hand > 0) {
-  await txDb.prepare(`
-    INSERT INTO stock_movements (occurred_at, occurred_on, product_id, variant_id, movement_type, quantity_change, previous_qty, new_qty, unit_cost, reason)
-    VALUES (?,?,?,?,'purchase_received',?,0,?,?,'Initial stock receipt')
-  `).run(
-    new Date().toISOString(),
-    localDate(),
-    productId,
-    vid,
-    v.stock_on_hand,
-    v.stock_on_hand,
-    v.avg_cost ?? null
-  );
-}
-      return vid;
+        await txDb.prepare(`
+          INSERT INTO stock_movements (
+            occurred_at,
+            occurred_on,
+            product_id,
+            variant_id,
+            movement_type,
+            quantity_change,
+            previous_qty,
+            new_qty,
+            unit_cost,
+            reason
+          )
+          VALUES (?, ?, ?, ?, 'purchase_received', ?, 0, ?, ?, ?)
+        `).run(
+          new Date().toISOString(),
+          localDate(),
+          productId,
+          variantId,
+          v.stock_on_hand,
+          v.stock_on_hand,
+          v.avg_cost ?? null,
+          'Initial stock receipt'
+        );
+      }
+
+      return variantId;
     } catch (e) {
-      if (/unique|duplicate key/i.test(e.message)) throw new HttpError(409, `Colour "${v.colour}" already exists for this product`);
+      if (/unique|duplicate key/i.test(e.message)) {
+        throw new HttpError(
+          409,
+          `Colour "${v.colour}" already exists for this product`
+        );
+      }
+
       throw e;
     }
   };
@@ -1776,6 +1835,11 @@ await storage.deleteImage(img.web_path);
   }));
 
   app.use('/api/admin', admin);
+
+    // Public health check for hosting-platform monitoring.
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
 
   // Frontend (production build) serving
   const dist = path.join(config.root, 'dist');

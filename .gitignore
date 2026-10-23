@@ -38,3 +38,18 @@ dist-ssr
 *.db-wal
 *.backup
 /v2/timeless-trends.zip
+
+# Additional local backups and temporary files
+/backups/
+/migration-backup-2026-10-16/
+/scratch/
+/uploads/
+*.db
+*.db-*
+*.backup
+*.before-*
+/v2/timeless-trends.zip
+
+# Additional server and source backup files
+/server/*.backup-*
+/server/*.before-*
