@@ -34,7 +34,7 @@ export const siteConfig = {
   // Public Domain
   // Set this only after deploying your website.
   // Example: 'https://yourdomain.com'
-  publicUrl: '',
+  publicUrl: 'https://timeless-trends.onrender.com',
 
   // Default contact info
   contact: {

@@ -1,3 +1,4 @@
+import SEO from '../components/SEO';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -294,8 +295,10 @@ export function ProductDetails() {
     product.originalPrice > product.price;
 
   return (
-    <div className="product-details-page section">
-      <div className="container">
+    <>
+      <SEO product={product} />
+
+      <div className="product-details-page section">
 
         {/* Breadcrumbs */}
         <nav
@@ -575,8 +578,8 @@ export function ProductDetails() {
             <ProductGrid products={relatedWatches} />
           </div>
         )}
-      </div>
-    </div>
+            </div>
+    </>
   );
 }
 

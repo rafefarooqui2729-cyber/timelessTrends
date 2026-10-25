@@ -1,3 +1,4 @@
+import SEO from './components/SEO';
 import React, { useEffect } from 'react';
 import {
   BrowserRouter,
@@ -55,9 +56,15 @@ function ScrollToTop() {
  * Public website layout.
  * Header and Footer appear ONLY on public pages.
  */
+
 function PublicLayout() {
+  const location = useLocation();
+  const isProductPage = location.pathname.startsWith('/product/');
+
   return (
     <div className="app-container">
+      {!isProductPage && <SEO />}
+
       <Header />
 
       <main>
@@ -68,6 +75,7 @@ function PublicLayout() {
     </div>
   );
 }
+
 
 export function App() {
   return (
