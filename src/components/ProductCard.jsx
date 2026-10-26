@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, MessageCircle } from 'lucide-react';
 import { formatCurrency, hasValidPrice } from '../utils/formatCurrency';
+import { getSwatchStyle } from '../utils/swatchColor';
 import { WhatsAppButton } from './WhatsAppButton';
 
 export function ProductCard({ product }) {
@@ -26,10 +27,8 @@ export function ProductCard({ product }) {
     e.preventDefault();
     e.stopPropagation();
     setSelectedVariant(variant);
-    if (variant.image) {
-      setActiveImage(variant.image);
-      setImageError(false);
-    }
+    setActiveImage(variant.image || product.mainImage);
+    setImageError(false);
   };
 
   return (
@@ -88,16 +87,21 @@ export function ProductCard({ product }) {
         </h3>
 
         {/* Pricing Row */}
-        <div className="product-card-price-row">
-          <span className={`product-card-price ${!hasValidPrice(product.price) ? 'on-request' : ''}`}>
-            {formatCurrency(product.price)}
-          </span>
-          {isDiscounted && (
-            <span className="product-card-original-price">
-              {formatCurrency(product.originalPrice, { fallbackOnNull: false })}
-            </span>
-          )}
-        </div>
+        {(() => {
+          const displayedPrice = selectedVariant?.price ?? product.price;
+          return (
+            <div className="product-card-price-row">
+              <span className={`product-card-price ${!hasValidPrice(displayedPrice) ? 'on-request' : ''}`}>
+                {formatCurrency(displayedPrice)}
+              </span>
+              {isDiscounted && (
+                <span className="product-card-original-price">
+                  {formatCurrency(product.originalPrice, { fallbackOnNull: false })}
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Variant Swatches Preview */}
         {hasVariants && (
@@ -106,10 +110,8 @@ export function ProductCard({ product }) {
               <button
                 key={v.id}
                 type="button"
-                className={`card-swatch-dot ${selectedVariant?.id === v.id ? 'active' : ''}`}
-                style={{
-                  backgroundColor: v.color || '#333'
-                }}
+                className={`card-swatch-dot ${String(selectedVariant?.id) === String(v.id) ? 'active' : ''}`}
+                style={getSwatchStyle(v.name || v.color || '')}
                 onClick={(e) => handleVariantPreview(v, e)}
                 title={v.name}
                 aria-label={`Select variant: ${v.name}`}

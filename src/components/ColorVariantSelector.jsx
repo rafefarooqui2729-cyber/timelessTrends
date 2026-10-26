@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
+import { getSwatchStyle } from '../utils/swatchColor';
 
 export function ColorVariantSelector({
   variants = [],
@@ -23,7 +24,7 @@ export function ColorVariantSelector({
         </span>
 
         {selectedVariant && (
-          <span className="variant-current-choice">
+          <span className="variant-current-choice" aria-live="polite">
             {selectedVariant.name}
           </span>
         )}
@@ -36,6 +37,7 @@ export function ColorVariantSelector({
       >
         {variants.map((variant) => {
           const isSelected = selectedVariant?.id === variant.id;
+          const swatchStyle = getSwatchStyle(variant.name || variant.color || '');
 
           return (
             <button
@@ -43,34 +45,13 @@ export function ColorVariantSelector({
               type="button"
               role="radio"
               aria-checked={isSelected}
-              aria-label={variant.name}
-              className={`variant-swatch-btn ${
-                isSelected ? 'active' : ''
-              }`}
+              aria-label={`Select ${variant.name} finish`}
+              className={`variant-swatch-btn ${isSelected ? 'active' : ''}`}
               onClick={() => onSelectVariant(variant)}
-              style={{
-                transition:
-                  'background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease',
-                borderColor: isSelected
-                  ? 'var(--color-gold)'
-                  : undefined,
-                boxShadow: isSelected
-                  ? '0 0 0 1px var(--color-gold), 0 4px 14px rgba(184,155,98,0.16)'
-                  : undefined,
-                transform: isSelected
-                  ? 'translateY(-2px)'
-                  : 'translateY(0)'
-              }}
             >
               <span
                 className="variant-color-circle"
-                style={{
-                  backgroundColor: variant.color || '#333',
-                  transition: 'transform 220ms ease',
-                  transform: isSelected
-                    ? 'scale(1.12)'
-                    : 'scale(1)'
-                }}
+                style={swatchStyle}
                 aria-hidden="true"
               />
 
@@ -81,9 +62,8 @@ export function ColorVariantSelector({
               {isSelected && (
                 <Check
                   size={14}
-                  color="var(--color-gold)"
+                  className="variant-check-icon"
                   aria-hidden="true"
-                  style={{ marginLeft: '4px' }}
                 />
               )}
             </button>

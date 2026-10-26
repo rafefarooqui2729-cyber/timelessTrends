@@ -25,52 +25,88 @@ export function isWhatsAppConfigured() {
 }
 
 /**
+ * Helper to determine if a URL is localhost / loopback
+ * 
+ * @param {string} url 
+ * @returns {boolean}
+ */
+export function isLocalUrl(url) {
+  if (!url) return true;
+  return /^(https?:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(url);
+}
+
+/**
  * Generates the clean prefilled product enquiry message according to brand standards.
  * Excludes any undefined, null, or placeholder fields.
  * 
  * @param {Object} params
  * @param {Object} params.product - Product object
  * @param {Object} [params.variant] - Currently selected colour variant
+ * @param {string} [params.publicUrl] - Optional public URL override
  * @returns {string} Unencoded plain text message
  */
-export function buildProductEnquiryMessage({ product, variant = null }) {
-  if (!product) return 'Hello TIMELESS TRENDS! I would like to enquire about your watches.';
+export function buildProductEnquiryMessage({ product, variant = null, publicUrl: urlOverride = null }) {
+  if (!product) return `Hello ${siteConfig.brandName || 'TIMELESS TRENDS'}! I would like to enquire about your watches.`;
 
+  const brandName = siteConfig.brandName || 'TIMELESS TRENDS';
   const lines = [
-    `Hello ${siteConfig.brandName}!`,
+    `Hello ${brandName}!`,
     '',
     'I am interested in this watch:',
     '',
-    `Product: ${product.name}`
+    `Product: ${product.name || 'TIMELESS TRENDS Timepiece'}`
   ];
 
-  if (product.brand && product.brand.trim()) {
-    lines.push(`Brand: ${product.brand}`);
+  if (product.brand && String(product.brand).trim()) {
+    lines.push(`Brand: ${String(product.brand).trim()}`);
   }
 
-  if (product.id) {
-    lines.push(`Product ID: ${product.id}`);
+  const productId = product.code || product.id;
+  if (productId) {
+    lines.push(`Product ID: ${productId}`);
   }
 
-  // Selected variant
-  if (variant && variant.name) {
-    lines.push(`Colour: ${variant.name}`);
+  // Selected variant: omit if generic or missing
+  const variantName = variant?.name || variant?.colour;
+  if (
+    variantName &&
+    String(variantName).trim() &&
+    !/^default(\s+finish)?$/i.test(String(variantName).trim())
+  ) {
+    lines.push(`Colour: ${String(variantName).trim()}`);
   }
 
-  // Price (only if verified)
-  if (hasValidPrice(product.price)) {
-    lines.push(`Price: ${formatCurrency(product.price)}`);
+  // Price (resolve displayed price: variant override or product base/effective price)
+  const price = variant?.price ?? product.price ?? product.selling_price ?? product.effective_price ?? product.priceFrom ?? product.price_from;
+  if (hasValidPrice(price)) {
+    lines.push(`Price: ${formatCurrency(price)}`);
   }
 
-  // Public URL check: ONLY include if configured and NOT localhost / 127.0.0.1
-  const publicUrl = siteConfig.publicUrl ? siteConfig.publicUrl.trim().replace(/\/$/, '') : '';
-  const isLocalOrInvalid = !publicUrl || 
-    publicUrl.includes('localhost') || 
-    publicUrl.includes('127.0.0.1') || 
-    publicUrl.startsWith('http://0.0.0.0');
+  // Canonical public URL check: ONLY include if configured and NOT localhost / 127.0.0.1
+  const rawBaseUrl = urlOverride ?? siteConfig.publicUrl ?? (typeof window !== 'undefined' && window.location ? window.location.origin : '');
+  const cleanBase = String(rawBaseUrl || '').trim().replace(/\/$/, '');
 
-  if (publicUrl && !isLocalOrInvalid && product.slug) {
-    lines.push(`Product link: ${publicUrl}/product/${product.slug}`);
+  if (cleanBase && !isLocalUrl(cleanBase) && product.slug) {
+    lines.push(`Product link: ${cleanBase}/product/${product.slug}`);
+  }
+
+  // Publicly accessible product image URL (selected variant image or primary product image)
+  const rawImage = variant?.image || product.mainImage || (Array.isArray(product.images) && product.images[0]?.url) || null;
+  if (rawImage && typeof rawImage === 'string' && rawImage.trim().length > 0) {
+    const trimmed = rawImage.trim();
+    let absoluteImg = null;
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      if (!isLocalUrl(trimmed)) {
+        absoluteImg = trimmed;
+      }
+    } else if (trimmed.startsWith('/') && cleanBase && !isLocalUrl(cleanBase)) {
+      absoluteImg = `${cleanBase}${trimmed}`;
+    }
+
+    if (absoluteImg) {
+      lines.push(`Product image: ${absoluteImg}`);
+    }
   }
 
   lines.push('');
@@ -87,8 +123,9 @@ export function buildProductEnquiryMessage({ product, variant = null }) {
  * @returns {string} Plain text general enquiry message
  */
 export function buildGeneralEnquiryMessage() {
+  const brandName = siteConfig.brandName || 'TIMELESS TRENDS';
   return [
-    `Hello ${siteConfig.brandName}!`,
+    `Hello ${brandName}!`,
     '',
     'I am browsing your watch catalogue and would like to enquire about your latest collections and availability.',
     '',
@@ -104,9 +141,10 @@ export function buildGeneralEnquiryMessage() {
  * @param {Object} [options.product]
  * @param {Object} [options.variant]
  * @param {string} [options.customMessage]
- * @returns {{ url: string|null, messageText: string, isConfigured: boolean }}
+ * @param {string} [options.publicUrl]
+ * @returns {{ url: string|null, messageText: string, isConfigured: boolean, configuredNumber: string }}
  */
-export function getWhatsAppActionDetails({ product = null, variant = null, customMessage = null } = {}) {
+export function getWhatsAppActionDetails({ product = null, variant = null, customMessage = null, publicUrl = null } = {}) {
   const isConfigured = isWhatsAppConfigured();
   const phone = sanitizePhoneNumber(siteConfig.whatsappNumber);
 
@@ -114,7 +152,7 @@ export function getWhatsAppActionDetails({ product = null, variant = null, custo
   if (customMessage) {
     messageText = customMessage;
   } else if (product) {
-    messageText = buildProductEnquiryMessage({ product, variant });
+    messageText = buildProductEnquiryMessage({ product, variant, publicUrl });
   } else {
     messageText = buildGeneralEnquiryMessage();
   }

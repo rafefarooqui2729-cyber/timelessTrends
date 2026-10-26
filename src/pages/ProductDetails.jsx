@@ -1,11 +1,12 @@
 import SEO from '../components/SEO';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 import {
   fetchPublicProductBySlug,
-  fetchPublicProducts
+  fetchPublicProducts,
+  getImagesForVariant
 } from '../utils/publicProductsApi';
 
 import {
@@ -31,6 +32,10 @@ export function ProductDetails() {
   const [stockUpdating, setStockUpdating] = useState(false);
 
   const refreshInProgress = useRef(false);
+    const galleryImages = useMemo(() => {
+    if (!product) return [];
+    return getImagesForVariant(product, selectedVariantId);
+  }, [product, selectedVariantId]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -273,7 +278,7 @@ export function ProductDetails() {
 
   const selectedVariant = hasVariants
     ? product.variants.find(
-        (variant) => variant.id === selectedVariantId
+        (variant) => String(variant.id) === String(selectedVariantId)
       ) || product.variants[0]
     : null;
 
@@ -299,6 +304,7 @@ export function ProductDetails() {
       <SEO product={product} />
 
       <div className="product-details-page section">
+        <div className="container">
 
         {/* Breadcrumbs */}
         <nav
@@ -376,13 +382,12 @@ export function ProductDetails() {
         <div className="product-details-grid">
 
           {/* Product Gallery */}
-          <div>
+          <div className="product-gallery-column">
             <ProductGallery
-              mainImage={product.mainImage}
+              images={galleryImages}
+              mainImage={selectedVariant?.image || product.mainImage}
               additionalImages={product.additionalImages}
-              variantImage={
-                selectedVariant?.image || null
-              }
+              variantImage={selectedVariant?.image || null}
               productName={product.name}
             />
           </div>
@@ -426,38 +431,45 @@ export function ProductDetails() {
 
             {/* Pricing */}
             <div className="product-price-section">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '12px'
-                }}
-              >
-                <span className="product-main-price">
-                  {formatCurrency(product.price)}
-                </span>
+              {(() => {
+                const currentPrice = selectedVariant?.price ?? product.price;
+                return (
+                  <>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: '12px'
+                      }}
+                    >
+                      <span className="product-main-price">
+                        {formatCurrency(currentPrice)}
+                      </span>
 
-                {isDiscounted && (
-                  <span
-                    style={{
-                      fontSize: '1.15rem',
-                      color: 'var(--color-text-muted)',
-                      textDecoration: 'line-through'
-                    }}
-                  >
-                    {formatCurrency(
-                      product.originalPrice,
-                      { fallbackOnNull: false }
-                    )}
-                  </span>
-                )}
-              </div>
+                      {isDiscounted && (
+                        <span
+                          style={{
+                            fontSize: '1.15rem',
+                            color: 'var(--color-text-muted)',
+                            textDecoration: 'line-through'
+                          }}
+                        >
+                          {formatCurrency(
+                            product.originalPrice,
+                            { fallbackOnNull: false }
+                          )}
+                        </span>
+                      )}
+                    </div>
 
-              <p className="product-price-notice">
-                {hasValidPrice(product.price)
-                  ? 'Inclusive of applicable taxes. Enquire directly on WhatsApp.'
-                  : 'Contact us on WhatsApp for pricing and availability.'}
-              </p>
+                    <p className="product-price-notice">
+                      {hasValidPrice(currentPrice)
+                        ? 'Inclusive of applicable taxes. Enquire directly on WhatsApp.'
+                        : 'Contact us on WhatsApp for pricing and availability.'}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Description */}
@@ -578,7 +590,8 @@ export function ProductDetails() {
             <ProductGrid products={relatedWatches} />
           </div>
         )}
-            </div>
+        </div>
+      </div>
     </>
   );
 }

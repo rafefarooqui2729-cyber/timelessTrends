@@ -11,6 +11,16 @@ export function buildEnquiryMessage({ product, variant, publicUrl }) {
   const price = variant?.price ?? product.price_from ?? product.price ?? product.selling_price;
   if (price != null && Number(price) > 0) lines.push(`Price: ${formatPrice(price)}`);
   if (publicUrl && !isLocal(publicUrl)) lines.push(`Product link: ${publicUrl.replace(/\/$/, '')}/shop/${product.slug}`);
+  const rawImg = variant?.image || product?.mainImage || product?.image;
+  if (rawImg && typeof rawImg === 'string' && rawImg.trim()) {
+    let absImg = rawImg.trim();
+    if (absImg.startsWith('/') && publicUrl && !isLocal(publicUrl)) {
+      absImg = `${publicUrl.replace(/\/$/, '')}${absImg}`;
+    }
+    if (absImg.startsWith('http') && !isLocal(absImg)) {
+      lines.push(`Product image: ${absImg}`);
+    }
+  }
   lines.push('', 'Please share its availability and further details.', '', 'Thank you.');
   return lines.join('\n');
 }

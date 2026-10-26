@@ -39,6 +39,18 @@ export function Header() {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Handle Escape key to close navigation drawer
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -139,6 +151,7 @@ export function Header() {
           role="dialog"
           aria-modal="true"
           aria-label="Mobile Navigation"
+          
         >
           <div className="mobile-nav-header">
             <div>
@@ -196,6 +209,21 @@ export function Header() {
               className="btn-whatsapp"
               style={{ width: '100%' }}
             />
+
+            {/* Creator Credit Badge */}
+            <div className="menu-creator-credit">
+              <span className="credit-label">CRAFTSMANSHIP &amp; DESIGN</span>
+              <a
+                href="https://rafefarooqui.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="credit-link"
+                aria-label="Designed and developed by Rafe Farooqui (opens in new tab)"
+              >
+                <span className="credit-sub">Designed &amp; Developed by</span>
+                <span className="credit-author">Rafe Farooqui</span>
+              </a>
+            </div>
           </div>
         </div>
       </header>

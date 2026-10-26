@@ -70,7 +70,9 @@ function mapApiProduct(product) {
 
   const mappedVariants = variants.map((variant) => {
     const variantImage = images.find(
-      (image) => image.variantId === variant.id
+      (image) =>
+        (image.variantId != null && String(image.variantId) === String(variant.id)) ||
+        (image.variant_id != null && String(image.variant_id) === String(variant.id))
     );
 
     const vPrice = variant.price ?? product.effective_price ?? product.selling_price;
@@ -80,7 +82,8 @@ function mapApiProduct(product) {
       sku: variant.sku || '',
       name: variant.colour || 'Default',
       color: variant.colour || 'Default',
-      image: variantImage?.url || mainImage,
+      image: variantImage?.url || null,
+      hasSpecificImage: Boolean(variantImage?.url),
       available: Boolean(variant.available),
       price: vPrice != null ? Number(vPrice) : null,
     };
@@ -119,6 +122,12 @@ function mapApiProduct(product) {
     originalPrice,
     mainImage,
     additionalImages: images.slice(1).map((image) => image.url),
+    images: images.map((img) => ({
+      id: img.id,
+      variantId: img.variantId ?? img.variant_id ?? null,
+      url: img.url,
+      alt: img.alt || ''
+    })),
     variants: mappedVariants,
     specifications,
     featured: Boolean(product.is_featured),
@@ -128,4 +137,55 @@ function mapApiProduct(product) {
     activeOffer: product.active_offer || null,
     priceFrom: product.price_from != null ? Number(product.price_from) : price,
   };
+}
+
+/**
+ * Resolves the accurate, ordered image list for a specific variant.
+ * 1. Variant-specific image(s) appear first.
+ * 2. General product images (not attached to any other variant) follow.
+ * 3. Never includes images tagged to a different variant.
+ * 4. Gracefully falls back to general product images if variant has no dedicated image.
+ *
+ * @param {Object} product - Mapped product object
+ * @param {string|number} variantId - Currently selected variant ID
+ * @returns {string[]} Array of image URLs
+ */
+export function getImagesForVariant(product, variantId) {
+  if (!product) return [];
+
+  const rawImages = Array.isArray(product.images) ? product.images : [];
+
+  // Dedicated images for this variant
+  const variantImages = rawImages.filter((img) => {
+    const vId = img.variantId ?? img.variant_id;
+    return vId != null && String(vId) === String(variantId);
+  });
+
+  // General images not assigned to any variant
+  const generalImages = rawImages.filter((img) => {
+    const vId = img.variantId ?? img.variant_id;
+    return vId == null;
+  });
+
+  if (variantImages.length > 0) {
+    const combined = [...variantImages, ...generalImages]
+      .map((img) => img.url)
+      .filter((u) => typeof u === 'string' && u.trim().length > 0);
+    return Array.from(new Set(combined));
+  }
+
+  if (generalImages.length > 0) {
+    const list = generalImages
+      .map((img) => img.url)
+      .filter((u) => typeof u === 'string' && u.trim().length > 0);
+    return Array.from(new Set(list));
+  }
+
+  // Final fallback to mainImage and additionalImages if images array was empty
+  const fallback = [
+    product.mainImage,
+    ...(Array.isArray(product.additionalImages) ? product.additionalImages : [])
+  ].filter((u) => typeof u === 'string' && u.trim().length > 0);
+
+  return Array.from(new Set(fallback));
 }

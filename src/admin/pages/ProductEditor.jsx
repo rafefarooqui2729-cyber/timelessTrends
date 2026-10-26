@@ -52,6 +52,8 @@ export function ProductEditor() {
   // Image Upload state
   const [images, setImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageVariantId, setImageVariantId] = useState('');
+  const [updatingImageId, setUpdatingImageId] = useState(null);
 
   useEffect(() => {
     loadCategories();
@@ -107,6 +109,7 @@ export function ProductEditor() {
       setDisplayPriority(p.display_priority || 0);
       setSpecs(p.specs && p.specs.length > 0 ? p.specs : [{ label: 'Case Diameter', value: '' }]);
       setVariants(p.variants || []);
+      console.log('PRODUCT VARIANTS:', p.variants);
       setImages(p.images || []);
       setError(null);
     } catch (err) {
@@ -157,6 +160,7 @@ export function ProductEditor() {
     setVariants(variants.filter((_, i) => i !== index));
   };
 
+
   // Image Upload handler
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -172,6 +176,9 @@ export function ProductEditor() {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('alt', `${name} watch photograph`);
+      if (imageVariantId) {
+        formData.append('variantId', imageVariantId);
+      }
 
       const updated = await api(`/api/admin/products/${id}/images`, {
         method: 'POST',
@@ -179,12 +186,14 @@ export function ProductEditor() {
         isFormData: true
       });
       setImages(updated.images || []);
-      setSuccess('Image uploaded and optimized to WebP successfully!');
+      setSuccess('Image uploaded and assigned successfully!');
       setTimeout(() => setSuccess(null), 3000);
+      setImageVariantId('');
     } catch (err) {
       alert('Upload failed: ' + err.message);
     } finally {
       setUploadingImage(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -197,7 +206,27 @@ export function ProductEditor() {
       alert('Delete failed: ' + err.message);
     }
   };
+    const handleImageVariantChange = async (imageId, value) => {
+    try {
+      setUpdatingImageId(imageId);
 
+      const updated = await api(`/api/admin/images/${imageId}`, {
+        method: 'PATCH',
+        body: {
+          variantId: value === '' ? null : Number(value)
+        }
+      });
+
+      setImages(updated.images || []);
+      setSuccess('Photo colour assignment updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      alert('Could not update photo assignment: ' + err.message);
+    } finally {
+      setUpdatingImageId(null);
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -628,65 +657,132 @@ export function ProductEditor() {
         {/* Section 6: Image Gallery */}
         {!isNew && (
           <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
               <div>
                 <h3 className="admin-card-title">Product Photographs Gallery</h3>
                 <p style={{ fontSize: '0.78rem', color: '#888' }}>
-                  Upload multiple photos. Originals are stored privately; high-res WebP derivatives are served on store.
+                  Upload multiple photos. You can assign photos to specific colour variants or the general gallery.
                 </p>
               </div>
 
-              <label className="btn-admin-gold" style={{ cursor: 'pointer' }}>
-                <Upload size={14} />
-                <span>{uploadingImage ? 'Uploading & Converting...' : 'Upload Photo'}</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleImageUpload}
-                  style={{ display: 'none' }}
-                  disabled={uploadingImage}
-                />
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.825rem', color: '#aaa' }}>
+                  <span>Assign to:</span>
+                  <select
+                    className="admin-input"
+                    style={{ minWidth: '180px', padding: '6px 10px', fontSize: '0.85rem' }}
+                    value={imageVariantId}
+                    onChange={(e) => setImageVariantId(e.target.value)}
+                    disabled={uploadingImage}
+                  >
+                    <option value="">General (All Variants)</option>
+                    {variants.filter((v) => v.id).map((v) => (
+                      <option key={v.id} value={String(v.id)}>
+                        {v.colour || `Variant #${v.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="btn-admin-gold" style={{ cursor: uploadingImage ? 'not-allowed' : 'pointer' }}>
+                  <Upload size={14} />
+                  <span>{uploadingImage ? 'Uploading & Converting...' : 'Upload Photo'}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                    disabled={uploadingImage}
+                  />
+                </label>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
-              {images.map((img) => (
-                <div
-                  key={img.id}
-                  style={{
-                    backgroundColor: '#111',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    aspectRatio: '4 / 5'
-                  }}
-                >
-                  <img
-                    src={img.url}
-                    alt={img.alt || 'Watch photo'}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteImage(img.id)}
-                    style={{
-                      position: 'absolute',
-                      top: '6px',
-                      right: '6px',
-                      background: 'rgba(0, 0, 0, 0.7)',
-                      border: 'none',
-                      color: '#F87171',
-                      borderRadius: '50%',
-                      padding: '4px',
-                      cursor: 'pointer'
-                    }}
-                    title="Delete image"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
+      
+{images.map((img) => (
+  <div
+    key={img.id}
+    style={{
+      backgroundColor: '#111',
+      border: '1px solid #333',
+      borderRadius: '4px',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      padding: '8px'
+    }}
+  >
+    <div style={{ position: 'relative', aspectRatio: '4 / 5' }}>
+      <img
+        src={img.url}
+        alt={img.alt || 'Watch photo'}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover'
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={() => handleDeleteImage(img.id)}
+        style={{
+          position: 'absolute',
+          top: '6px',
+          right: '6px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          border: 'none',
+          color: '#F87171',
+          borderRadius: '50%',
+          padding: '4px',
+          cursor: 'pointer'
+        }}
+        title="Delete image"
+      >
+        <Trash2 size={13} />
+      </button>
+    </div>
+
+    <label style={{ fontSize: '0.75rem', color: '#aaa' }}>
+      Assign this photo to:
+    </label>
+
+    <select
+      aria-label={`Assign photo ${img.id} to colour variant`}
+      value={img.variant_id == null ? '' : String(img.variant_id)}
+      onChange={(e) =>
+        handleImageVariantChange(img.id, e.target.value)
+      }
+      disabled={updatingImageId === img.id}
+      style={{
+        width: '100%',
+        boxSizing: 'border-box',
+        backgroundColor: '#111',
+        color: '#d4af37',
+        border: '1px solid #555',
+        borderRadius: '3px',
+        padding: '8px',
+        fontSize: '0.8rem'
+      }}
+    >
+      <option value="">General (All Variants)</option>
+      {variants.filter((v) => v.id).map((v) => (
+  <option key={v.id} value={String(v.id)}>
+    {v.colour || `Variant #${v.id}`}
+  </option>
+))}
+    </select>
+
+    {updatingImageId === img.id && (
+      <span style={{ fontSize: '0.7rem', color: '#aaa' }}>
+        Saving assignment...
+      </span>
+    )}
+  </div>
+))}
+
 
               {images.length === 0 && (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px', border: '1px dashed #333', borderRadius: '4px', color: '#777' }}>

@@ -1384,7 +1384,63 @@ await storage.deleteImage(file.webPath);
 })
   );
 
+  admin.patch(
+    '/images/:id',
+    requirePermission('media:write'),
+    wrap(async (req, res) => {
+      const imageId = Number(req.params.id);
 
+      const img = await db.prepare(
+        'SELECT * FROM images WHERE id=?'
+      ).get(imageId);
+
+      if (!img) {
+        throw new HttpError(404, 'Image not found');
+      }
+
+      const body = parse(
+        z.object({
+          variantId: z.number().int().positive().nullable()
+        }),
+        req.body
+      );
+
+      if (body.variantId !== null) {
+        const variant = await db.prepare(
+          'SELECT 1 FROM variants WHERE id=? AND product_id=?'
+        ).get(body.variantId, img.product_id);
+
+        if (!variant) {
+          throw new HttpError(
+            400,
+            'Variant does not belong to product'
+          );
+        }
+      }
+
+      await db.prepare(
+        'UPDATE images SET variant_id=? WHERE id=?'
+      ).run(body.variantId, imageId);
+
+      await audit(
+        db,
+        req.user.id,
+        'image.assign_variant',
+        'product',
+        img.product_id,
+        {
+          imageId,
+          previousVariantId: img.variant_id,
+          variantId: body.variantId
+        }
+      );
+
+      res.json(
+        await productRow(img.product_id, req.user.role)
+      );
+    })
+  );
+  
   admin.delete(
   '/images/:id',
   requirePermission('media:write'),
